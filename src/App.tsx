@@ -1,17 +1,13 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        hello world
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-4">Welcome to Coursivo</h1>
+        <p className="text-muted-foreground">
+          Your application is ready with Tailwind CSS and shadcn/ui!
+        </p>
       </div>
-    </>
+    </div>
   )
 }
 
