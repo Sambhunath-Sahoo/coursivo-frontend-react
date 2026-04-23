@@ -20,7 +20,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuthStore, useIsAuthenticated, useUser } from "@/store/auth.store";
+import { useIsAuthenticated, useUser, useAppDispatch } from "@/store/hooks";
+import { logout } from "@/store/auth.slice";
 import { getInitials } from "@/lib/user-utils";
 
 const publicNavLinks: { name: string; href: string }[] = [];
@@ -32,9 +33,9 @@ export function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const dispatch = useAppDispatch();
   const isAuthenticated = useIsAuthenticated();
   const user = useUser();
-  const logout = useAuthStore((state) => state.logout);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,7 +50,7 @@ export function Navbar() {
   }, [location]);
 
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
     toast.success("Logged out successfully");
     navigate("/");
   };

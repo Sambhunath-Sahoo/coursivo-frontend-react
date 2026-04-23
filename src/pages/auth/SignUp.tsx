@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService } from "@/api/auth.service";
-import { useAuthStore } from "@/store/auth.store";
+import { useAppDispatch } from "@/store/hooks";
+import { setAuth } from "@/store/auth.slice";
 import type { UserRole } from "@/types/auth.types";
 
 export default function SignUp() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const dispatch = useAppDispatch();
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,7 +55,7 @@ export default function SignUp() {
       });
 
       // Save token to store (also persists to localStorage)
-      setAuth(token);
+      dispatch(setAuth(token));
 
       toast.success("Account created successfully!");
 

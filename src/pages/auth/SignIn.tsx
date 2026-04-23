@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService } from "@/api/auth.service";
-import { useAuthStore } from "@/store/auth.store";
+import { useAppDispatch } from "@/store/hooks";
+import { setAuth } from "@/store/auth.slice";
+import { decodeToken } from "@/lib/jwt";
 
 export default function SignIn() {
   const navigate = useNavigate();
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const dispatch = useAppDispatch();
 
   const [isLoading, setIsLoading] = useState(false);
   const [showDemoPassword, setShowDemoPassword] = useState(false);
@@ -38,16 +40,14 @@ export default function SignIn() {
         password: formData.password,
       });
 
-      // Save token to store (also persists to localStorage)
-      setAuth(token);
-
-      // Get user from store to check role
-      const user = useAuthStore.getState().user;
+      // Decode token to get role for redirect (also persists to store)
+      const decodedUser = decodeToken(token);
+      dispatch(setAuth(token));
 
       toast.success("Welcome back!");
 
       // Redirect based on role
-      if (user?.role === "INSTRUCTOR") {
+      if (decodedUser?.role === "INSTRUCTOR") {
         navigate("/instructor/dashboard", { replace: true });
       } else {
         navigate("/dashboard", { replace: true });

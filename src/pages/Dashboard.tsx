@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useUser } from "@/store/auth.store";
+import { useUser } from "@/store/hooks";
 import {
   Card,
   CardContent,

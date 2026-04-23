@@ -2,7 +2,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/user-utils";
 import { Logo } from "@/components/ui/Logo";
-import { useAuthStore, useUser } from "@/store/auth.store";
+import { useUser, useAppDispatch } from "@/store/hooks";
+import { logout } from "@/store/auth.slice";
 import { toast } from "sonner";
 import {
   LogOut,
@@ -88,10 +89,10 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useUser();
-  const logout = useAuthStore((state) => state.logout);
+  const dispatch = useAppDispatch();
 
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
     toast.success("Logged out successfully");
     navigate("/");
   };

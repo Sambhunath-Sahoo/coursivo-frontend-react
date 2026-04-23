@@ -1,28 +1,20 @@
 # Agents
 
-Place custom subagent definition files here (`.md` files).
+Specialized subagents for the Coursivo frontend. Invoke via Claude Code for focused review tasks.
 
-Each agent file defines a specialized AI agent with a specific role, persona, and set of tools it can use. Claude Code can spawn these agents for focused tasks.
+## Available Agents
 
-## Example: `ui-reviewer.md`
-
-```markdown
----
-name: ui-reviewer
-description: Reviews React components for design system violations, accessibility issues, and code quality
-tools: Read, Grep, Glob
----
-
-You are a UI code reviewer for the Coursivo frontend.
-Check for:
-- Hardcoded hex colors instead of semantic tokens
-- Missing dark mode support
-- Inline styles instead of Tailwind utilities
-- Missing cn() for class composition
-- Non-shadcn UI components when shadcn equivalent exists
-- Missing accessibility attributes (aria, alt text, focus states)
-```
+| Agent | Description |
+|---|---|
+| `ui-reviewer` | Reviews React components and pages for design system violations, code quality, and accessibility gaps |
+| `accessibility-auditor` | Full WCAG 2.1 AA audit — keyboard nav, screen reader support, ARIA, color contrast, focus management |
+| `performance-auditor` | Reviews for unnecessary re-renders, missing memoization, expensive computations, and bundle size issues |
 
 ## Usage
 
-Once defined, Claude Code can use these agents automatically or you can invoke them.
+Ask Claude to use a specific agent by name, or Claude will select the appropriate one based on context.
+
+Examples:
+- "Review NotificationBell with the ui-reviewer"
+- "Audit CourseDetail page for accessibility"
+- "Check InstructorDashboard for performance issues using the performance-auditor"
