@@ -13,6 +13,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SignIn = lazy(() => import("./pages/auth/SignIn"));
 const SignUp = lazy(() => import("./pages/auth/SignUp"));
+const MyCourses = lazy(() => import("./pages/student/MyCourses"));
 
 // Layouts - lazy loaded
 const InstructorLayout = lazy(() =>
@@ -86,6 +87,7 @@ function App() {
               {/* Student Dashboard Routes - with sidebar layout */}
               <Route element={<StudentLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/my-courses" element={<MyCourses />} />
                 {/* Add more student routes here */}
               </Route>
 

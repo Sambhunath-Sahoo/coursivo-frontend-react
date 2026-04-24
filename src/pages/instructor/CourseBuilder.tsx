@@ -365,7 +365,7 @@ export default function CourseBuilder() {
         }))
       };
 
-      await courseService.saveCurriculum(courseId, payload);
+      await courseService.saveCurriculum(courseId!, payload);
       alert("Curriculum saved successfully!");
     } catch (err) {
       console.error(err);

@@ -7,6 +7,11 @@ export const courseService = {
     return api.get<Course[]>("courses");
   },
 
+  // Create a new course
+  createCourse: (data: Partial<Course>): Promise<Course> => {
+    return api.post<Course>("instructor/courses", data);
+  },
+
   // Get course by ID
   getCourseById: (id: number): Promise<Course> => {
     return api.get<Course>(`courses/${id}`);

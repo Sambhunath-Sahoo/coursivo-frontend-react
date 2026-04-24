@@ -10,7 +10,7 @@ export interface EnrollmentResponse {
 export const enrollmentService = {
   /** POST /api/enrollments/courses/{courseId} */
   enrollInCourse: (courseId: number): Promise<EnrollmentResponse> =>
-    api.post<EnrollmentResponse>(`enrollments/courses/${courseId}`),
+    api.post<EnrollmentResponse>(`enrollments/courses/${courseId}`, {}),
 
   /** GET /api/enrollments/my-courses */
   getMyEnrollments: (): Promise<EnrollmentResponse[]> =>
