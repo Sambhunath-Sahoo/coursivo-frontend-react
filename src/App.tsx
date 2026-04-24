@@ -30,6 +30,9 @@ const StudentLayout = lazy(() =>
 const InstructorDashboard = lazy(
   () => import("./pages/instructor/InstructorDashboard"),
 );
+const InstructorCourses = lazy(
+  () => import("./pages/instructor/InstructorCourses"),
+);
 const CourseBuilder = lazy(() => import("./pages/instructor/CourseBuilder"));
 
 // Loading fallback component
@@ -89,6 +92,7 @@ function App() {
               {/* Instructor Routes - with sidebar layout */}
               <Route path="/instructor" element={<InstructorLayout />}>
                 <Route path="dashboard" element={<InstructorDashboard />} />
+                <Route path="courses" element={<InstructorCourses />} />
                 <Route path="courses/create" element={<CourseBuilder />} />
                 <Route path="courses/:id/edit" element={<CourseBuilder />} />
               </Route>

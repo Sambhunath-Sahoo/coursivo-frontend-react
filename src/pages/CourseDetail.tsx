@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { courseService } from "@/api/course.service";
+import { enrollmentService } from "@/api/enrollment.service";
 import type { Course } from "@/types/course.types";
+import { useAppSelector } from "@/store/hooks";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -15,6 +17,10 @@ import {
   CalendarDays,
   BadgeIndianRupee,
   ChevronRight,
+  FileText,
+  Clock,
+  Lock,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,17 +53,23 @@ function formatDate(dateStr: string | undefined): string {
 export default function CourseDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [course, setCourse] = useState<Course | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enrolled, setEnrolled] = useState(false);
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     const load = async () => {
       try {
-        const data = await courseService.getCourseById(Number(id));
-        setCourse(data);
+        const courseData = await courseService.getCourseById(Number(id));
+        setCourse(courseData);
+        // if (isAuthenticated) {
+        //   const { isEnrolled } = await enrollmentService.checkEnrollment(Number(id));
+        //   setEnrolled(isEnrolled);
+        // }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load course");
       } finally {
@@ -65,7 +77,28 @@ export default function CourseDetail() {
       }
     };
     load();
-  }, [id]);
+  }, [id, isAuthenticated]);
+
+  const handleEnroll = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    if (!id) return;
+    
+    setIsEnrolling(true);
+    try {
+      await enrollmentService.enrollInCourse(Number(id));
+      setEnrolled(true);
+    } catch (err) {
+      console.error("Enrollment failed", err);
+      alert(err instanceof Error ? err.message : "Failed to enroll");
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
+
+  const lessons = course?.lessons || [];
 
   // ── Loading ──
   if (isLoading) {
@@ -216,20 +249,23 @@ export default function CourseDetail() {
 
         <Button
           className="w-full bg-primary font-medium text-primary-foreground"
-          onClick={() => setEnrolled(true)}
+          onClick={enrolled ? undefined : handleEnroll}
+          disabled={isEnrolling}
         >
           {enrolled ? (
             <>
               <CheckCircle2 className="mr-2 h-4 w-4" />
               Enrolled
             </>
+          ) : isEnrolling ? (
+            "Enrolling..."
           ) : course.isFree || course.price === 0 ? (
             <>
               <Zap className="mr-2 h-4 w-4" />
               Enrol for Free
             </>
           ) : (
-            "Buy Now"
+            "Enroll Now"
           )}
         </Button>
 
@@ -348,6 +384,77 @@ export default function CourseDetail() {
                 </div>
               </div>
             </section>
+
+            {/* Course Curriculum */}
+            {lessons.length > 0 && (
+              <section>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                    Course Curriculum
+                  </h2>
+                  <span className="text-sm text-muted-foreground">
+                    {lessons.length} lesson{lessons.length !== 1 ? "s" : ""}
+                    {lessons.reduce((acc, l) => acc + (l.durationMinutes ?? 0), 0) > 0 &&
+                      ` · ${Math.floor(lessons.reduce((acc, l) => acc + (l.durationMinutes ?? 0), 0) / 60)}h ${lessons.reduce((acc, l) => acc + (l.durationMinutes ?? 0), 0) % 60}m total`}
+                  </span>
+                </div>
+                <div className="overflow-hidden rounded-lg border border-border/60 bg-card">
+                  {lessons.map((lesson, index) => (
+                    <div
+                      key={lesson.id}
+                      className={cn(
+                        "flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/40",
+                        index !== lessons.length - 1 && "border-b border-border/40",
+                      )}
+                    >
+                      {/* Order badge */}
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                        {lesson.order}
+                      </span>
+
+                      {/* Icon */}
+                      <div className="shrink-0 text-muted-foreground">
+                        {lesson.videoUrl ? (
+                          <PlayCircle className="h-4 w-4" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                      </div>
+
+                      {/* Title + description */}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {lesson.title}
+                        </p>
+                        {lesson.description && (
+                          <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                            {lesson.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Meta: preview + duration */}
+                      <div className="flex shrink-0 items-center gap-3">
+                        {lesson.isPreviewable ? (
+                          <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                            <Eye className="h-3 w-3" />
+                            Preview
+                          </span>
+                        ) : (
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        )}
+                        {lesson.durationMinutes != null && lesson.durationMinutes > 0 && (
+                          <span className="flex items-center gap-1 text-[12px] text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {lesson.durationMinutes} min
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Course Info */}
             <section>

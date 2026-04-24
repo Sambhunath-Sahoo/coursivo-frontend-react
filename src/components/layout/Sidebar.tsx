@@ -208,12 +208,16 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
                 )}
               >
                 {/* Avatar - matches Vercel's colorful circle */}
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500">
-                  <span className="text-[10px] font-semibold leading-none text-white">
-                    {user?.fullName
-                      ? getInitials(user.fullName as string)
-                      : "U"}
-                  </span>
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-400 to-violet-500">
+                  {user?.image ? (
+                    <img src={user.image} alt={user.fullName || "User avatar"} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-semibold leading-none text-white">
+                      {user?.fullName
+                        ? getInitials(user.fullName as string)
+                        : "U"}
+                    </span>
+                  )}
                 </div>
                 {!isCollapsed && (
                   <>

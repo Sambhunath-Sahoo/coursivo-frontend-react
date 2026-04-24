@@ -24,6 +24,7 @@ export function decodeToken(token: string): AuthUser | null {
       email: decoded.sub,
       fullName: decoded.fullName || decoded.sub.split("@")[0],
       role: decoded.role as UserRole,
+      image: decoded.image,
     };
   } catch {
     return null;

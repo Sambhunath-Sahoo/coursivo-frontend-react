@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@/types/auth.types";
+import { storage, STORAGE_KEYS } from "@/lib/storage";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/";
 
@@ -20,10 +21,13 @@ async function http<T>(
   endpoint: string,
   options: HttpOptions = {},
 ): Promise<T> {
-  const { token, ...fetchOptions } = options;
+  const { token: providedToken, ...fetchOptions } = options;
 
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
+
+  // Automatically add token from storage if not provided
+  const token = providedToken || storage.getString(STORAGE_KEYS.TOKEN);
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);

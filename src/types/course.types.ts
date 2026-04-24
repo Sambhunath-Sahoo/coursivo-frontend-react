@@ -20,4 +20,5 @@ export interface Course {
   status: CourseStatus;
   createdAt: string;
   updatedAt: string;
+  lessons?: import("@/api/lesson.service").LessonResponse[];
 }

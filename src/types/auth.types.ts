@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: UserRole;
+  image?: string;
 }
 
 // API Request types
@@ -43,6 +44,7 @@ export interface JwtPayload {
   sub: string; // email
   fullName?: string;
   role: UserRole;
+  image?: string;
   iat: number;
   exp: number;
 }

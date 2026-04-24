@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
@@ -39,8 +39,11 @@ import {
 import { SectionItem } from "./course-builder/SectionItem";
 import type { Section, Lesson, CourseData } from "./course-builder/types";
 import { initialSections, initialCourseData } from "./course-builder/types";
+import { courseService } from "@/api/course.service";
 
 export default function CourseBuilder() {
+  const { id } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const [sections, setSections] = useState<Section[]>(initialSections);
   const [courseData, setCourseData] = useState<CourseData>(initialCourseData);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -327,6 +330,51 @@ export default function CourseBuilder() {
     0,
   );
 
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      let courseId = id;
+      
+      // If creating a new course
+      if (!courseId) {
+        // Minimal course creation
+        const newCourse = await courseService.createCourse({
+          title: courseData.title || "Untitled Course",
+          description: courseData.subtitle,
+          price: parseFloat(courseData.price.replace(/[^0-9.]/g, '')) || 0,
+        } as any);
+        courseId = newCourse.id.toString();
+        // Redirect to edit mode
+        navigate(`/instructor/courses/${courseId}/edit`, { replace: true });
+      }
+
+      // Format payload for curriculum
+      const payload = {
+        sections: sections.map((s) => ({
+          id: s.id,
+          title: s.title,
+          lessons: s.lessons.map((l) => ({
+            id: l.id,
+            title: l.title,
+            type: l.type,
+            duration: l.duration,
+            isPreview: l.isPreview
+          }))
+        }))
+      };
+
+      await courseService.saveCurriculum(courseId, payload);
+      alert("Curriculum saved successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save curriculum");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Custom collision detection
   const collisionDetection = (args: Parameters<typeof closestCenter>[0]) => {
     // First try pointer within for lessons
@@ -361,9 +409,9 @@ export default function CourseBuilder() {
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline">Preview</Button>
-              <Button className="gap-2">
+              <Button className="gap-2" onClick={handleSave} disabled={isSaving}>
                 <Save className="h-4 w-4" />
-                Save Changes
+                {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>
@@ -550,8 +598,8 @@ export default function CourseBuilder() {
               </CardContent>
             </Card>
 
-            <Button className="w-full" size="lg">
-              Publish Course
+            <Button className="w-full" size="lg" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Publishing..." : "Publish Course"}
             </Button>
           </div>
         </div>
