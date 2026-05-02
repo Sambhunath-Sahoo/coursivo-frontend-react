@@ -2,9 +2,11 @@
 export interface Lesson {
   id: string;
   title: string;
-  type: "video" | "article" | "quiz";
+  type: "video" | "article";
   duration: string;
   isPreview: boolean;
+  videoUrl?: string;
+  content?: string;
 }
 
 export interface Section {
@@ -78,13 +80,6 @@ export const initialSections: Section[] = [
         title: "Event Handling",
         type: "video",
         duration: "15:40",
-        isPreview: false,
-      },
-      {
-        id: "lesson-2-4",
-        title: "Section Quiz",
-        type: "quiz",
-        duration: "10 questions",
         isPreview: false,
       },
     ],

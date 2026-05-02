@@ -1,453 +1,378 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-  pointerWithin,
-  rectIntersection,
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, DragOverlay, pointerWithin, rectIntersection,
 } from "@dnd-kit/core";
-import type {
-  DragEndEvent,
-  DragStartEvent,
-  DragOverEvent,
-} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent, DragOverEvent } from "@dnd-kit/core";
 import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  arrayMove,
+  SortableContext, sortableKeyboardCoordinates,
+  verticalListSortingStrategy, arrayMove,
 } from "@dnd-kit/sortable";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Plus,
-  Video,
-  Save,
-  ArrowLeft,
-  PlayCircle,
-  FileText,
-  Clock,
-  GripVertical,
+  ArrowLeft, Plus, Save, FileText, GripVertical,
+  PlayCircle, Clock, BookOpen, Layers, Check, Loader2,
 } from "lucide-react";
 import { SectionItem } from "./course-builder/SectionItem";
 import type { Section, Lesson, CourseData } from "./course-builder/types";
 import { initialSections, initialCourseData } from "./course-builder/types";
 import { courseService } from "@/api/course.service";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+// ─── Field helper ─────────────────────────────────────────────────────────────
+
+function Field({
+  label, id, value, onChange, placeholder, type = "text",
+}: {
+  label: string; id: string; value: string;
+  onChange: (v: string) => void; placeholder?: string; type?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </label>
+      <input
+        id={id} type={type} value={value} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 w-full rounded-xl border border-border bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 transition-colors focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+      />
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CourseBuilder() {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
-  const [sections, setSections] = useState<Section[]>(initialSections);
-  const [courseData, setCourseData] = useState<CourseData>(initialCourseData);
+  const [sections, setSections] = useState<Section[]>(id ? [] : initialSections);
+  const [courseData, setCourseData] = useState<CourseData>(
+    id ? { title: "", subtitle: "", category: "", subcategory: "", level: "", language: "", price: "" }
+      : initialCourseData,
+  );
+  const [isLoading, setIsLoading] = useState(!!id);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeType, setActiveType] = useState<"section" | "lesson" | null>(
-    null,
-  );
+  const [activeType, setActiveType] = useState<"section" | "lesson" | null>(null);
+  const [activeTab, setActiveTab] = useState<"curriculum" | "details">("curriculum");
 
-  // Sensors for drag and drop
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setIsLoading(true);
+        const course = await courseService.getCourseById(Number(id));
+        if (cancelled) return;
+        setCourseData({
+          title: course.title ?? "", subtitle: course.description ?? "",
+          category: "", subcategory: "", level: "", language: "",
+          price: course.price != null ? `₹${course.price}` : "",
+        });
+        setSections((course.sections ?? []).map((s) => ({
+          id: String(s.id), title: s.title, isExpanded: true,
+          lessons: s.lessons.map((l) => ({
+            id: String(l.id), title: l.title,
+            type: (l.videoUrl ? "video" : "article") as "video" | "article",
+            duration: l.durationMinutes
+              ? `${Math.floor(l.durationMinutes)}:${String(Math.round((l.durationMinutes % 1) * 60)).padStart(2, "0")}`
+              : l.videoUrl ? "0:00" : "0 min read",
+            isPreview: l.isPreviewable, videoUrl: l.videoUrl ?? undefined, content: l.content ?? undefined,
+          })),
+        })));
+      } catch (err) { console.error("Failed to load course:", err); }
+      finally { if (!cancelled) setIsLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  // Find which section contains a lesson
-  const findSectionByLessonId = (lessonId: string): Section | undefined => {
-    return sections.find((s) => s.lessons.some((l) => l.id === lessonId));
-  };
+  const findSectionByLessonId = (lessonId: string) =>
+    sections.find((s) => s.lessons.some((l) => l.id === lessonId));
 
-  // Get lesson by id
   const getLessonById = (lessonId: string): Lesson | undefined => {
-    for (const section of sections) {
-      const lesson = section.lessons.find((l) => l.id === lessonId);
-      if (lesson) return lesson;
+    for (const s of sections) {
+      const l = s.lessons.find((l) => l.id === lessonId);
+      if (l) return l;
     }
-    return undefined;
   };
 
-  // Handle drag start
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const activeData = active.data.current;
-
-    setActiveId(active.id as string);
-    setActiveType(activeData?.type || null);
+  const handleDragStart = (e: DragStartEvent) => {
+    setActiveId(e.active.id as string);
+    setActiveType(e.active.data.current?.type || null);
   };
 
-  // Handle drag over - for moving lessons between sections
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    const activeData = active.data.current;
-    const overData = over.data.current;
-
-    // Only handle lesson dragging
-    if (activeData?.type !== "lesson") return;
-
+  const handleDragOver = (e: DragOverEvent) => {
+    const { active, over } = e;
+    if (!over || active.data.current?.type !== "lesson") return;
     const activeLessonId = active.id as string;
     const activeSection = findSectionByLessonId(activeLessonId);
-
     if (!activeSection) return;
-
-    // Determine target section
+    const overData = over.data.current;
     let targetSectionId: string | null = null;
-
     if (overData?.type === "lesson") {
-      // Dropping over another lesson
-      const overSection = findSectionByLessonId(over.id as string);
-      targetSectionId = overSection?.id || null;
+      targetSectionId = findSectionByLessonId(over.id as string)?.id || null;
     } else if (overData?.type === "section") {
-      // Dropping over a section's droppable area
       targetSectionId = overData.sectionId;
     }
-
     if (!targetSectionId || targetSectionId === activeSection.id) return;
-
-    // Move lesson to new section
-    setSections((prevSections) => {
-      const newSections = [...prevSections];
-
-      // Find source and target section indices
-      const sourceSectionIndex = newSections.findIndex(
-        (s) => s.id === activeSection.id,
-      );
-      const targetSectionIndex = newSections.findIndex(
-        (s) => s.id === targetSectionId,
-      );
-
-      if (sourceSectionIndex === -1 || targetSectionIndex === -1)
-        return prevSections;
-
-      // Find the lesson
-      const lessonIndex = newSections[sourceSectionIndex].lessons.findIndex(
-        (l) => l.id === activeLessonId,
-      );
-      if (lessonIndex === -1) return prevSections;
-
-      // Remove from source
-      const [lesson] = newSections[sourceSectionIndex].lessons.splice(
-        lessonIndex,
-        1,
-      );
-
-      // Add to target
+    setSections((prev) => {
+      const next = [...prev];
+      const si = next.findIndex((s) => s.id === activeSection.id);
+      const ti = next.findIndex((s) => s.id === targetSectionId);
+      if (si === -1 || ti === -1) return prev;
+      const li = next[si].lessons.findIndex((l) => l.id === activeLessonId);
+      if (li === -1) return prev;
+      const [lesson] = next[si].lessons.splice(li, 1);
       if (overData?.type === "lesson") {
-        // Insert at the position of the over lesson
-        const overLessonIndex = newSections[
-          targetSectionIndex
-        ].lessons.findIndex((l) => l.id === over.id);
-        newSections[targetSectionIndex].lessons.splice(
-          overLessonIndex,
-          0,
-          lesson,
-        );
+        const oi = next[ti].lessons.findIndex((l) => l.id === over.id);
+        next[ti].lessons.splice(oi, 0, lesson);
       } else {
-        // Add at the end
-        newSections[targetSectionIndex].lessons.push(lesson);
+        next[ti].lessons.push(lesson);
       }
-
-      return newSections;
+      return next;
     });
   };
 
-  // Handle drag end
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    setActiveId(null);
-    setActiveType(null);
-
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    setActiveId(null); setActiveType(null);
     if (!over) return;
-
-    const activeData = active.data.current;
-
-    if (activeData?.type === "section") {
-      // Reorder sections
-      if (active.id !== over.id) {
-        setSections((prevSections) => {
-          const oldIndex = prevSections.findIndex((s) => s.id === active.id);
-          const newIndex = prevSections.findIndex((s) => s.id === over.id);
-          return arrayMove(prevSections, oldIndex, newIndex);
-        });
-      }
-    } else if (activeData?.type === "lesson") {
-      // Reorder lessons within the same section
-      const activeSection = findSectionByLessonId(active.id as string);
-      const overSection = findSectionByLessonId(over.id as string);
-
-      if (activeSection && overSection && activeSection.id === overSection.id) {
-        if (active.id !== over.id) {
-          setSections((prevSections) => {
-            return prevSections.map((section) => {
-              if (section.id !== activeSection.id) return section;
-
-              const oldIndex = section.lessons.findIndex(
-                (l) => l.id === active.id,
-              );
-              const newIndex = section.lessons.findIndex(
-                (l) => l.id === over.id,
-              );
-
-              return {
-                ...section,
-                lessons: arrayMove(section.lessons, oldIndex, newIndex),
-              };
-            });
-          });
-        }
+    if (active.data.current?.type === "section" && active.id !== over.id) {
+      setSections((prev) => arrayMove(prev, prev.findIndex((s) => s.id === active.id), prev.findIndex((s) => s.id === over.id)));
+    } else if (active.data.current?.type === "lesson") {
+      const as_ = findSectionByLessonId(active.id as string);
+      const os = findSectionByLessonId(over.id as string);
+      if (as_ && os && as_.id === os.id && active.id !== over.id) {
+        setSections((prev) => prev.map((s) => {
+          if (s.id !== as_.id) return s;
+          return { ...s, lessons: arrayMove(s.lessons, s.lessons.findIndex((l) => l.id === active.id), s.lessons.findIndex((l) => l.id === over.id)) };
+        }));
       }
     }
   };
 
-  // Section handlers
-  const handleAddSection = () => {
-    const newSection: Section = {
-      id: `section-${Date.now()}`,
-      title: "New Section",
-      lessons: [],
-      isExpanded: true,
-    };
-    setSections([...sections, newSection]);
-  };
+  const handleAddSection = () => setSections([...sections, {
+    id: `section-${Date.now()}`, title: "New Section", lessons: [], isExpanded: true,
+  }]);
 
-  const handleUpdateSection = (
-    sectionId: string,
-    updates: Partial<Section>,
-  ) => {
-    setSections(
-      sections.map((s) => (s.id === sectionId ? { ...s, ...updates } : s)),
-    );
-  };
+  const handleUpdateSection = (sectionId: string, updates: Partial<Section>) =>
+    setSections(sections.map((s) => (s.id === sectionId ? { ...s, ...updates } : s)));
 
-  const handleDeleteSection = (sectionId: string) => {
+  const handleDeleteSection = (sectionId: string) =>
     setSections(sections.filter((s) => s.id !== sectionId));
-  };
 
-  const handleToggleSection = (sectionId: string) => {
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId ? { ...s, isExpanded: !s.isExpanded } : s,
-      ),
-    );
-  };
+  const handleToggleSection = (sectionId: string) =>
+    setSections(sections.map((s) => s.id === sectionId ? { ...s, isExpanded: !s.isExpanded } : s));
 
-  // Lesson handlers
-  const handleAddLesson = (
-    sectionId: string,
-    type: "video" | "article" | "quiz",
-  ) => {
+  const handleAddLesson = (sectionId: string, type: "video" | "article") => {
     const newLesson: Lesson = {
       id: `lesson-${Date.now()}`,
-      title:
-        type === "video"
-          ? "New Video Lesson"
-          : type === "article"
-            ? "New Article"
-            : "New Quiz",
-      type,
-      duration:
-        type === "video"
-          ? "0:00"
-          : type === "article"
-            ? "0 min read"
-            : "0 questions",
-      isPreview: false,
+      title: type === "video" ? "New Video Lesson" : "New Article",
+      type, duration: type === "video" ? "0:00" : "0 min read", isPreview: false,
     };
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? { ...s, lessons: [...s.lessons, newLesson], isExpanded: true }
-          : s,
-      ),
-    );
+    setSections(sections.map((s) => s.id === sectionId
+      ? { ...s, lessons: [...s.lessons, newLesson], isExpanded: true } : s));
   };
 
-  const handleUpdateLesson = (
-    sectionId: string,
-    lessonId: string,
-    updates: Partial<Lesson>,
-  ) => {
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? {
-              ...s,
-              lessons: s.lessons.map((l) =>
-                l.id === lessonId ? { ...l, ...updates } : l,
-              ),
-            }
-          : s,
-      ),
-    );
-  };
+  const handleUpdateLesson = (sectionId: string, lessonId: string, updates: Partial<Lesson>) =>
+    setSections(sections.map((s) => s.id === sectionId
+      ? { ...s, lessons: s.lessons.map((l) => l.id === lessonId ? { ...l, ...updates } : l) } : s));
 
-  const handleDeleteLesson = (sectionId: string, lessonId: string) => {
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? { ...s, lessons: s.lessons.filter((l) => l.id !== lessonId) }
-          : s,
-      ),
-    );
-  };
+  const handleDeleteLesson = (sectionId: string, lessonId: string) =>
+    setSections(sections.map((s) => s.id === sectionId
+      ? { ...s, lessons: s.lessons.filter((l) => l.id !== lessonId) } : s));
 
-  const handleToggleLessonPreview = (sectionId: string, lessonId: string) => {
-    setSections(
-      sections.map((s) =>
-        s.id === sectionId
-          ? {
-              ...s,
-              lessons: s.lessons.map((l) =>
-                l.id === lessonId ? { ...l, isPreview: !l.isPreview } : l,
-              ),
-            }
-          : s,
-      ),
-    );
-  };
+  const handleToggleLessonPreview = (sectionId: string, lessonId: string) =>
+    setSections(sections.map((s) => s.id === sectionId
+      ? { ...s, lessons: s.lessons.map((l) => l.id === lessonId ? { ...l, isPreview: !l.isPreview } : l) } : s));
 
-  // Get active lesson for drag overlay
-  const activeLesson =
-    activeId && activeType === "lesson" ? getLessonById(activeId) : null;
-
-  // Calculate totals
-  const totalSections = sections.length;
-  const totalLessons = sections.reduce((acc, s) => acc + s.lessons.length, 0);
-  const totalVideos = sections.reduce(
-    (acc, s) => acc + s.lessons.filter((l) => l.type === "video").length,
-    0,
-  );
-
-  const [isSaving, setIsSaving] = useState(false);
+  const buildPayload = () => ({
+    sections: sections.map((s) => ({
+      id: s.id, title: s.title,
+      lessons: s.lessons.map((l) => ({
+        id: l.id, title: l.title, type: l.type, duration: l.duration,
+        isPreview: l.isPreview, videoUrl: l.videoUrl, content: l.content,
+      })),
+    })),
+  });
 
   const handleSave = async () => {
     try {
       setIsSaving(true);
       let courseId = id;
-      
-      // If creating a new course
       if (!courseId) {
-        // Minimal course creation
-        const newCourse = await courseService.createCourse({
+        const c = await courseService.createCourse({
           title: courseData.title || "Untitled Course",
           description: courseData.subtitle,
-          price: parseFloat(courseData.price.replace(/[^0-9.]/g, '')) || 0,
+          price: parseFloat(courseData.price.replace(/[^0-9.]/g, "")) || 0,
         } as any);
-        courseId = newCourse.id.toString();
-        // Redirect to edit mode
+        courseId = c.id.toString();
         navigate(`/instructor/courses/${courseId}/edit`, { replace: true });
+      } else {
+        await courseService.updateCourse(Number(courseId), {
+          title: courseData.title || "Untitled Course",
+          description: courseData.subtitle,
+          price: parseFloat(courseData.price.replace(/[^0-9.]/g, "")) || 0,
+          thumbnailUrl: null,
+        });
       }
-
-      // Format payload for curriculum
-      const payload = {
-        sections: sections.map((s) => ({
-          id: s.id,
-          title: s.title,
-          lessons: s.lessons.map((l) => ({
-            id: l.id,
-            title: l.title,
-            type: l.type,
-            duration: l.duration,
-            isPreview: l.isPreview
-          }))
-        }))
-      };
-
-      await courseService.saveCurriculum(courseId!, payload);
-      alert("Curriculum saved successfully!");
+      await courseService.saveCurriculum(courseId!, buildPayload());
+      toast.success("Course saved successfully!");
     } catch (err) {
       console.error(err);
-      alert("Failed to save curriculum");
-    } finally {
-      setIsSaving(false);
-    }
+      toast.error("Failed to save course");
+    } finally { setIsSaving(false); }
   };
 
-  // Custom collision detection
-  const collisionDetection = (args: Parameters<typeof closestCenter>[0]) => {
-    // First try pointer within for lessons
-    const pointerCollisions = pointerWithin(args);
-    if (pointerCollisions.length > 0) {
-      return pointerCollisions;
-    }
-    // Fallback to rect intersection
-    return rectIntersection(args);
+  const handlePublish = async () => {
+    if (!id) { toast.warning("Save the course first before publishing."); return; }
+    try {
+      setIsPublishing(true);
+      await courseService.publishCourse(Number(id));
+      toast.success("Course published!");
+      navigate("/instructor/courses");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to publish course");
+    } finally { setIsPublishing(false); }
   };
+
+  const totalSections = sections.length;
+  const totalLessons = sections.reduce((a, s) => a + s.lessons.length, 0);
+  const totalVideos = sections.reduce((a, s) => a + s.lessons.filter((l) => l.type === "video").length, 0);
+  const activeLesson = activeId && activeType === "lesson" ? getLessonById(activeId) : null;
+
+  const collisionDetection = (args: Parameters<typeof closestCenter>[0]) => {
+    const p = pointerWithin(args);
+    return p.length > 0 ? p : rectIntersection(args);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-full items-center justify-center bg-muted/30">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/80" />
+      </div>
+    );
+  }
+
+  const set = (k: keyof CourseData) => (v: string) => setCourseData((p) => ({ ...p, [k]: v }));
 
   return (
-    <div className="min-h-full bg-muted/30">
-      {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background">
-        <div className="container-padding mx-auto max-w-7xl py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/instructor/dashboard">
-                <Button variant="ghost" size="icon" className="shrink-0">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  {courseData.title}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Draft • {totalSections} sections • {totalLessons} lessons
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline">Preview</Button>
-              <Button className="gap-2" onClick={handleSave} disabled={isSaving}>
-                <Save className="h-4 w-4" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
+    <div className="flex h-full flex-col bg-muted/30 font-sans antialiased">
+
+      {/* ── Sticky top bar ──────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-5">
+        {/* Left */}
+        <div className="flex w-1/3 items-center gap-3 min-w-0">
+          <Link
+            to="/instructor/dashboard"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/80 hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div className="min-w-0 hidden sm:block">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {courseData.title || "Untitled Course"}
+            </p>
+            <p className="text-[11px] text-muted-foreground/80">
+              {totalSections} sections · {totalLessons} lessons
+            </p>
           </div>
+        </div>
+
+        {/* Center - Tabs */}
+        <div className="flex w-1/3 justify-center">
+          <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+            <button
+              onClick={() => setActiveTab("curriculum")}
+              className={cn(
+                "rounded-md px-4 py-1.5 text-xs font-semibold transition-all",
+                activeTab === "curriculum" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Curriculum
+            </button>
+            <button
+              onClick={() => setActiveTab("details")}
+              className={cn(
+                "rounded-md px-4 py-1.5 text-xs font-semibold transition-all",
+                activeTab === "details" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Course Details
+            </button>
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="flex w-1/3 justify-end items-center gap-2.5">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-sm font-semibold text-foreground/80 transition-colors hover:border-foreground/50 hover:text-foreground disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">{isSaving ? "Saving…" : "Save"}</span>
+          </button>
+          <button
+            onClick={handlePublish}
+            disabled={isPublishing || isSaving || !id}
+            className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+          >
+            {isPublishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">{isPublishing ? "Publishing…" : "Publish"}</span>
+          </button>
         </div>
       </div>
 
-      <div className="container-padding mx-auto max-w-7xl py-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Content - Curriculum Builder */}
-          <div className="space-y-4 lg:col-span-2">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Course Curriculum</CardTitle>
-                  <Button
-                    onClick={handleAddSection}
-                    size="sm"
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Section
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {sections.length === 0 ? (
-                  <div className="py-12 text-center text-muted-foreground">
-                    <Video className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                    <p className="font-medium">No sections yet</p>
-                    <p className="text-sm">
-                      Add your first section to start building your course
+      {/* ── Body ────────────────────────────────────────────────────────── */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 py-8 lg:px-12">
+          
+          {/* Main content container using full horizontal space but capped to 7xl for readability */}
+          <div className="mx-auto max-w-7xl">
+
+            {/* ── Curriculum Tab ──────────────────────────────────────────────── */}
+            {activeTab === "curriculum" && (
+              <div>
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold tracking-tight text-foreground">Curriculum</h2>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      Drag sections and lessons to reorder your content.
                     </p>
-                    <Button onClick={handleAddSection} className="mt-4 gap-2">
-                      <Plus className="h-4 w-4" />
-                      Add Section
-                    </Button>
+                  </div>
+                  <button
+                    onClick={handleAddSection}
+                    className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <Plus className="h-4 w-4" /> Add Section
+                  </button>
+                </div>
+
+                {sections.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-background py-24 text-center">
+                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-border/50 bg-muted/30">
+                      <Layers className="h-6 w-6 text-muted-foreground/50" />
+                    </div>
+                    <p className="mb-1 text-lg font-semibold text-foreground">No sections yet</p>
+                    <p className="mb-6 max-w-sm text-sm text-muted-foreground">
+                      Add your first section to start building your curriculum
+                    </p>
+                    <button
+                      onClick={handleAddSection}
+                      className="flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Plus className="h-4 w-4" /> Add Section
+                    </button>
                   </div>
                 ) : (
                   <DndContext
@@ -457,10 +382,7 @@ export default function CourseBuilder() {
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}
                   >
-                    <SortableContext
-                      items={sections.map((s) => s.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
+                    <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                       <div className="space-y-4">
                         {sections.map((section, index) => (
                           <SectionItem
@@ -479,128 +401,85 @@ export default function CourseBuilder() {
                       </div>
                     </SortableContext>
 
-                    {/* Drag Overlay for lessons */}
                     <DragOverlay>
                       {activeLesson && (
-                        <div className="flex items-center gap-3 rounded-sm border border-border bg-card p-3 shadow-lg">
-                          <GripVertical className="h-4 w-4 text-muted-foreground" />
-                          <div className="text-muted-foreground">
-                            {activeLesson.type === "video" ? (
-                              <PlayCircle className="h-4 w-4" />
-                            ) : (
-                              <FileText className="h-4 w-4" />
-                            )}
+                        <div className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 shadow-sm">
+                          <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+                          <div className="text-muted-foreground/80">
+                            {activeLesson.type === "video" ? <PlayCircle className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                           </div>
-                          <span className="flex-1 text-sm">
-                            {activeLesson.title}
-                          </span>
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {activeLesson.duration}
+                          <span className="flex-1 text-sm font-medium text-foreground">{activeLesson.title}</span>
+                          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground/80">
+                            <Clock className="h-3 w-3" />{activeLesson.duration}
                           </span>
                         </div>
                       )}
                     </DragOverlay>
                   </DndContext>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            )}
 
-          {/* Sidebar - Course Details */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Course Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Course Title</Label>
-                  <Input
-                    id="title"
-                    value={courseData.title}
-                    onChange={(e) =>
-                      setCourseData({ ...courseData, title: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="subtitle">Subtitle</Label>
-                  <Input
-                    id="subtitle"
-                    value={courseData.subtitle}
-                    onChange={(e) =>
-                      setCourseData({ ...courseData, subtitle: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Input
-                      id="category"
-                      value={courseData.category}
-                      onChange={(e) =>
-                        setCourseData({
-                          ...courseData,
-                          category: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="level">Level</Label>
-                    <Input
-                      id="level"
-                      value={courseData.level}
-                      onChange={(e) =>
-                        setCourseData({ ...courseData, level: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price</Label>
-                  <Input
-                    id="price"
-                    value={courseData.price}
-                    onChange={(e) =>
-                      setCourseData({ ...courseData, price: e.target.value })
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            {/* ── Details Tab ─────────────────────────────────────────────────── */}
+            {activeTab === "details" && (
+              <div className="grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-8">
+                  <div>
+                    <h2 className="text-lg font-semibold tracking-tight text-foreground mb-6">Course Information</h2>
+                    <div className="space-y-5 rounded-2xl border border-border bg-background p-6">
+                      <Field label="Title" id="title" value={courseData.title}
+                        onChange={set("title")} placeholder="e.g. Complete React Developer Course" />
+                      <Field label="Subtitle / Description" id="subtitle" value={courseData.subtitle}
+                        onChange={set("subtitle")} placeholder="A short, catchy description of your course…" />
+                      
+                      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <Field label="Category" id="category" value={courseData.category}
+                          onChange={set("category")} placeholder="e.g. Web Development" />
+                        <Field label="Level" id="level" value={courseData.level}
+                          onChange={set("level")} placeholder="e.g. Beginner" />
+                      </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Course Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Sections</span>
-                    <span className="font-medium">{totalSections}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Lessons</span>
-                    <span className="font-medium">{totalLessons}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Videos</span>
-                    <span className="font-medium">{totalVideos}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Status</span>
-                    <span className="font-medium text-orange-600">Draft</span>
+                      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <Field label="Language" id="language" value={courseData.language}
+                          onChange={set("language")} placeholder="e.g. English" />
+                        <Field label="Price (₹)" id="price" value={courseData.price}
+                          onChange={set("price")} placeholder="e.g. 499" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            <Button className="w-full" size="lg" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? "Publishing..." : "Publish Course"}
-            </Button>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="mb-4 text-sm font-semibold text-foreground">Summary</h3>
+                    <div className="space-y-2">
+                      {[
+                        { icon: Layers, label: "Sections", value: totalSections },
+                        { icon: BookOpen, label: "Lessons", value: totalLessons },
+                        { icon: PlayCircle, label: "Videos", value: totalVideos },
+                      ].map(({ icon: Icon, label, value }) => (
+                        <div key={label} className="flex items-center justify-between rounded-xl bg-background border border-border px-4 py-3 shadow-sm">
+                          <div className="flex items-center gap-2.5 text-sm text-muted-foreground font-medium">
+                            <Icon className="h-4 w-4 text-muted-foreground/80" />
+                            {label}
+                          </div>
+                          <span className="text-base font-semibold text-foreground">{value}</span>
+                        </div>
+                      ))}
+                      
+                      <div className="flex items-center justify-between rounded-xl bg-background border border-border px-4 py-3 shadow-sm mt-4">
+                        <span className="text-sm font-medium text-muted-foreground">Status</span>
+                        <span className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+                          id ? "border-amber-200 bg-amber-50 text-amber-700" : "border-border bg-muted text-muted-foreground"
+                        }`}>
+                          {id ? "Draft" : "New"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

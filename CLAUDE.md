@@ -6,7 +6,7 @@ React 19 + TypeScript + Vite frontend for Coursivo — an EdTech platform for ed
 
 - **React 19** + **TypeScript** + **Vite 7**
 - **Tailwind CSS v3** + **shadcn/ui** (Radix UI primitives) — add components via `npx shadcn@latest add [name]`
-- **Zustand v5** for state management
+- **Redux Toolkit v2** + **React Redux v9** for state management
 - **React Router v7** for routing
 - **next-themes** for dark/light mode toggle
 - **lucide-react** for icons
@@ -26,7 +26,7 @@ src/
 │   ├── auth/        # SignIn, SignUp
 │   ├── instructor/  # InstructorDashboard, CourseBuilder
 │   └── ...
-├── store/           # Zustand stores (auth.store.ts)
+├── store/           # Redux Toolkit store (store.ts, auth.slice.ts, hooks.ts, auth.store.ts re-export)
 ├── lib/             # utils.ts (cn()), jwt.ts, storage.ts, user-utils.ts
 ├── types/           # TypeScript interfaces (auth.types.ts, course.types.ts)
 └── config/          # App configuration (sidebar.config.ts)

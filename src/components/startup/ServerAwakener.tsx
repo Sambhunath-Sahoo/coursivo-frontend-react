@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { healthService } from "@/api/health.service";
 import { Loader2, Server, Coffee } from "lucide-react";
 
@@ -8,43 +8,34 @@ interface ServerAwakenerProps {
 
 export function ServerAwakener({ children }: ServerAwakenerProps) {
   const [isAwake, setIsAwake] = useState(false);
-  const [startTime] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
+  const isAwakeRef = useRef(false);
+  const startTime = useRef(Date.now());
 
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>;
-    let checkInterval: ReturnType<typeof setInterval>;
-
     const checkHealth = async () => {
+      if (isAwakeRef.current) return;
       try {
         await healthService.checkHealth();
+        isAwakeRef.current = true;
         setIsAwake(true);
-      } catch (error) {
-        // Ignored, will retry
-        console.log("Server still waking up...", error);
+      } catch {
+        // will retry on next interval tick
       }
     };
 
-    // Initial check
     checkHealth();
 
-    // Retry every 2 seconds
-    checkInterval = setInterval(() => {
-      if (!isAwake) {
-        checkHealth();
-      }
-    }, 2000);
-
-    // Update elapsed timer for UI fun
-    intervalId = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTime) / 1000));
+    const checkInterval = setInterval(checkHealth, 2000);
+    const elapsedInterval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTime.current) / 1000));
     }, 1000);
 
     return () => {
       clearInterval(checkInterval);
-      clearInterval(intervalId);
+      clearInterval(elapsedInterval);
     };
-  }, [isAwake, startTime]);
+  }, []);
 
   if (isAwake) {
     return <>{children}</>;
@@ -64,7 +55,7 @@ export function ServerAwakener({ children }: ServerAwakenerProps) {
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold tracking-tight">
+          <h2 className="text-2xl font-semibold tracking-tight">
             Waking up the server
           </h2>
 

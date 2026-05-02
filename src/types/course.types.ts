@@ -1,3 +1,5 @@
+import type { LessonResponse } from "@/api/lesson.service";
+
 // Course instructor
 export interface CourseInstructor {
   id: number;
@@ -6,6 +8,14 @@ export interface CourseInstructor {
 
 // Course status
 export type CourseStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
+// Section with nested lessons from API
+export interface SectionResponse {
+  id: number;
+  title: string;
+  order: number;
+  lessons: LessonResponse[];
+}
 
 // Course from API
 export interface Course {
@@ -20,5 +30,5 @@ export interface Course {
   status: CourseStatus;
   createdAt: string;
   updatedAt: string;
-  lessons?: import("@/api/lesson.service").LessonResponse[];
+  sections?: SectionResponse[];
 }

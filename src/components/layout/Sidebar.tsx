@@ -1,27 +1,19 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/user-utils";
-import { Logo } from "@/components/ui/Logo";
 import { useUser, useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/auth.slice";
 import { toast } from "sonner";
 import {
   LogOut,
-  MoreVertical,
   ChevronsLeft,
   ChevronsRight,
-  Sun,
-  Moon,
+  ChevronRight,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Logo } from "@/components/ui/Logo";
 
-// Types for sidebar configuration
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 export interface SidebarItem {
   name: string;
   href: string;
@@ -41,8 +33,9 @@ export interface SidebarConfig {
   quickCreateHref?: string;
 }
 
-// Reusable nav item component to avoid repetition
-function SidebarNavItem({
+// ─── Nav Item ─────────────────────────────────────────────────────────────────
+
+function NavItem({
   item,
   isCollapsed,
   isActive,
@@ -57,27 +50,30 @@ function SidebarNavItem({
         to={item.href}
         title={isCollapsed ? item.name : undefined}
         className={cn(
-          "flex items-center gap-2.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
-          isCollapsed && "justify-center px-2",
+          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+          isCollapsed && "justify-center px-0",
           isActive
-            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-            : "font-normal text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+            ? "bg-foreground text-background"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >
         <item.icon
           className={cn(
-            "shrink-0",
+            "shrink-0 transition-colors",
             isCollapsed ? "h-[18px] w-[18px]" : "h-[15px] w-[15px]",
-            isActive
-              ? "text-sidebar-accent-foreground"
-              : "text-sidebar-foreground/70",
+            isActive ? "text-background" : "text-muted-foreground/70 group-hover:text-foreground",
           )}
         />
-        {!isCollapsed && <span>{item.name}</span>}
+        {!isCollapsed && <span className="truncate">{item.name}</span>}
+        {!isCollapsed && isActive && (
+          <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-background/50" />
+        )}
       </Link>
     </li>
   );
 }
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
   config: SidebarConfig;
@@ -98,42 +94,36 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
   };
 
   const isActive = (href: string) => {
-    // Exact match for main dashboard routes
-    if (href.endsWith("/dashboard")) {
-      return location.pathname === href;
-    }
+    if (href.endsWith("/dashboard")) return location.pathname === href;
     return location.pathname.startsWith(href);
   };
 
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col overflow-hidden border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "w-16" : "w-[240px]",
+        "flex h-screen flex-col border-r border-border bg-background transition-[width] duration-300 ease-in-out",
+        isCollapsed ? "w-16" : "w-[220px]",
       )}
       style={{ willChange: "width" }}
     >
-      {/* Logo / Brand */}
+      {/* ── Brand ──────────────────────────────────────────────────────── */}
       <div
         className={cn(
-          "flex h-14 shrink-0 items-center border-b border-sidebar-border",
-          isCollapsed ? "justify-center" : "justify-between gap-2 px-4",
+          "flex h-14 shrink-0 items-center border-b border-border/50",
+          isCollapsed ? "justify-center px-0" : "justify-between px-4",
         )}
       >
         {!isCollapsed && (
-          <Link
-            to="/"
-            className="flex shrink-0 items-center gap-2 overflow-hidden transition-opacity hover:opacity-80"
-          >
-            <Logo size="sm" className="text-sidebar-accent-foreground" />
+          <Link to="/" className="flex items-center gap-2 group transition-transform hover:scale-[1.02]">
+            <Logo size="sm" showText={true} />
           </Link>
         )}
         <button
           onClick={onToggle}
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "flex shrink-0 items-center justify-center rounded-sm text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-            isCollapsed ? "h-full w-full p-2" : "p-1.5",
+            "flex shrink-0 items-center justify-center rounded-lg text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
+            isCollapsed ? "h-9 w-9" : "h-7 w-7",
           )}
         >
           {isCollapsed ? (
@@ -144,12 +134,17 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
         </button>
       </div>
 
-      {/* Main Navigation - scrollable area */}
-      <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+      {/* ── Nav ────────────────────────────────────────────────────────── */}
+      <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
         {/* Main Items */}
+        {!isCollapsed && config.mainNavItems.title && (
+          <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+            {config.mainNavItems.title}
+          </p>
+        )}
         <ul className="space-y-0.5">
           {config.mainNavItems.items.map((item) => (
-            <SidebarNavItem
+            <NavItem
               key={item.name}
               item={item}
               isCollapsed={isCollapsed}
@@ -158,17 +153,17 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
           ))}
         </ul>
 
-        {/* Content Section - Only show if configured */}
+        {/* Content Section */}
         {config.contentSection && (
-          <div className="mt-5">
+          <div className="mt-6">
             {!isCollapsed && config.contentSection.title && (
-              <h3 className="mb-1 px-2.5 text-[11px] font-medium uppercase tracking-widest text-sidebar-foreground/50">
+              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                 {config.contentSection.title}
-              </h3>
+              </p>
             )}
             <ul className="space-y-0.5">
               {config.contentSection.items.map((item) => (
-                <SidebarNavItem
+                <NavItem
                   key={item.name}
                   item={item}
                   isCollapsed={isCollapsed}
@@ -180,13 +175,13 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
         )}
       </nav>
 
-      {/* Bottom Section */}
-      <div className="shrink-0 border-t border-sidebar-border">
-        {/* Bottom Navigation Items */}
+      {/* ── Bottom ─────────────────────────────────────────────────────── */}
+      <div className="shrink-0 border-t border-border/50">
+        {/* Bottom nav items */}
         {config.bottomNavItems.length > 0 && (
-          <ul className="space-y-0.5 border-b border-sidebar-border px-2 pb-1 pt-2">
+          <ul className="space-y-0.5 px-2 py-2">
             {config.bottomNavItems.map((item) => (
-              <SidebarNavItem
+              <NavItem
                 key={item.name}
                 item={item}
                 isCollapsed={isCollapsed}
@@ -196,77 +191,53 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
           </ul>
         )}
 
-        {/* User Profile */}
-        <div className={cn("p-2", isCollapsed && "px-1")}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
-                  "text-sidebar-foreground hover:bg-sidebar-accent",
-                  isCollapsed && "justify-center",
-                )}
-              >
-                {/* Avatar - matches Vercel's colorful circle */}
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-400 to-violet-500">
-                  {user?.image ? (
-                    <img src={user.image} alt={user.fullName || "User avatar"} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-[10px] font-semibold leading-none text-white">
-                      {user?.fullName
-                        ? getInitials(user.fullName as string)
-                        : "U"}
-                    </span>
-                  )}
-                </div>
-                {!isCollapsed && (
-                  <>
-                    <div className="flex-1 overflow-hidden text-left">
-                      <p className="mb-0.5 truncate text-[13px] font-medium leading-none text-sidebar-accent-foreground">
-                        {user?.fullName || "User"}
-                      </p>
-                      <p className="truncate text-[11px] leading-none text-sidebar-foreground/50">
-                        {user?.email || ""}
-                      </p>
-                    </div>
-                    <MoreVertical className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/40" />
-                  </>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align={isCollapsed ? "center" : "end"}
-              side={isCollapsed ? "right" : "top"}
-              className="w-56"
+        {/* User row */}
+        <div className={cn("p-2", isCollapsed && "flex justify-center")}>
+          {isCollapsed ? (
+            <button
+              onClick={handleLogout}
+              title="Log out"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
             >
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.preventDefault();
-                  const root = document.documentElement;
-                  const isDark = root.classList.contains("dark");
-                  if (isDark) {
-                    root.classList.remove("dark");
-                    localStorage.setItem("coursivo_theme", "light");
-                  } else {
-                    root.classList.add("dark");
-                    localStorage.setItem("coursivo_theme", "dark");
-                  }
-                }}
-              >
-                <Moon className="mr-2 hidden h-4 w-4 dark:block" />
-                <Sun className="mr-2 block h-4 w-4 dark:hidden" />
-                Toggle Theme
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
+              <LogOut className="h-4 w-4" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+              {/* Avatar */}
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground">
+                {user?.image ? (
+                  <img
+                    src={user.image}
+                    alt={user.fullName || "User avatar"}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-[10px] font-semibold leading-none text-background">
+                    {user?.fullName ? getInitials(user.fullName as string) : "U"}
+                  </span>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="truncate text-[12px] font-semibold leading-tight text-foreground">
+                  {user?.fullName || "User"}
+                </p>
+                <p className="truncate text-[10px] leading-tight text-muted-foreground/70">
+                  {user?.email || ""}
+                </p>
+              </div>
+
+              {/* Logout icon */}
+              <button
                 onClick={handleLogout}
-                className="text-destructive focus:text-destructive"
+                title="Log out"
+                className="shrink-0 rounded-md p-1 text-muted-foreground/70 transition-colors hover:bg-muted hover:text-foreground"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </aside>

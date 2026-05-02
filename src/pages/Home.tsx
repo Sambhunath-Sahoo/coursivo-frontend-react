@@ -1,366 +1,464 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CourseCard } from "@/components/CourseCard";
+import { CourseCard, CourseCardSkeleton } from "@/components/CourseCard";
 import { courseService } from "@/api/course.service";
 import type { Course } from "@/types/course.types";
+import homePageImg from "@/assets/home-page.png";
 import {
-  Loader2,
   BookOpen,
-  ChevronRight,
-  Star,
-  PlayCircle,
-  Award,
-  Target,
+  BarChart2,
+  CreditCard,
+  Headphones,
   Zap,
-  Globe,
+  DollarSign,
+  Search,
   Shield,
-  CheckCircle2,
+  Check,
+  ChevronRight,
+  Globe,
 } from "lucide-react";
+
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+const FEATURES = [
+  {
+    icon: BookOpen,
+    title: "Built for learners",
+    desc: "Coursivo is beautifully crafted for students and educators with best-in-class tools to make content creation easy.",
+  },
+  {
+    icon: Globe,
+    title: "Global Marketplace",
+    desc: "Publish your courses in our thriving marketplace and reach thousands of eager learners worldwide without worrying about hosting.",
+  },
+  {
+    icon: DollarSign,
+    title: "Purchase Power Parity",
+    desc: "Our smart purchase power parity feature helps creators maximise their profits when selling around the globe.",
+  },
+  {
+    icon: Search,
+    title: "SEO",
+    desc: "We provide built-in, top-tier SEO support to help your courses rank on Google, Bing, and more.",
+  },
+  {
+    icon: BarChart2,
+    title: "Analytics",
+    desc: "Track course performance, student engagement, and revenue metrics, etc.",
+  },
+  {
+    icon: CreditCard,
+    title: "Multi Payment Gateway",
+    desc: "We support over 5 payment gateways and more than 30 currencies worldwide.",
+  },
+  {
+    icon: Headphones,
+    title: "Customer Support",
+    desc: "We are available almost 100% of the time so that you can ship content like a breeze.",
+  },
+  {
+    icon: Zap,
+    title: "And much more",
+    desc: "Even more things to offer which you are just going to love.",
+  },
+];
+
+type PricingPlan = {
+  name: string;
+  price: string;
+  period: string;
+  desc: string;
+  features: string[];
+  popular?: boolean;
+  exploreMore?: boolean;
+};
+
+const PRICING_PLANS: PricingPlan[] = [
+  {
+    name: "Basic",
+    price: "$499",
+    period: "/year",
+    desc: "When you grow, need more power and flexibility",
+    features: [
+      "All in Free Plan",
+      "Basic Analytics",
+      "Unlimited Course Enrollments",
+      "Community",
+      "Digital Products",
+    ],
+  },
+  {
+    name: "Professional",
+    price: "$1,499",
+    period: "/year",
+    desc: "When you grow, need more power and flexibility",
+    features: [
+      "All in Basic Plan",
+      "Full HD Videos",
+      "Email Templates",
+      "DRM Encryption",
+      "Subscriptions",
+    ],
+    popular: true,
+    exploreMore: true,
+  },
+  {
+    name: "Premium",
+    price: "$1,999",
+    period: "/year",
+    desc: "When you grow, need more power and flexibility",
+    features: [
+      "All in Professional plan",
+      "Zapier Integration",
+      "Pabbly Integration",
+      "Priority Support",
+      "SAML & OpenID Connect",
+    ],
+  },
+];
+
+const FREE_FEATURES = [
+  "Custom Payment Gateways",
+  "Youtube Integration",
+  "SSL Support",
+  "SEO",
+  "1:1 Meeting",
+  "Private Discord Server Access",
+];
+
+const FOOTER_LINKS: Record<string, { label: string; href: string }[]> = {
+  "": [
+    { label: "Pricing", href: "/" },
+    { label: "Blog", href: "/" },
+    { label: "Contact", href: "/" },
+  ],
+  " ": [
+    { label: "Privacy Policy", href: "/" },
+    { label: "Terms of Service", href: "/" },
+    { label: "Refund Policy", href: "/" },
+  ],
+  "  ": [
+    { label: "Twitter", href: "/" },
+    { label: "LinkedIn", href: "/" },
+    { label: "GitHub", href: "/" },
+  ],
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [billing, setBilling] = useState<"monthly" | "annually">("annually");
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchCourses = async () => {
       try {
-        const data = await courseService.getPublicCourses();
+        const data = await courseService.getPublicCourses(controller.signal);
         setCourses(data);
       } catch (err) {
+        if ((err as Error).name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to load courses");
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
-
     fetchCourses();
+    return () => controller.abort();
   }, []);
 
   return (
-    <div className="min-h-screen bg-background font-sans selection:bg-primary/20">
-      {/* 1. Hero Section - Premium Split Layout with Glassmorphism Float */}
-      <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-background via-muted/30 to-background pb-28 pt-20 md:pb-32">
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[500px] w-[1000px] -translate-x-1/2 rounded-full bg-primary/10 opacity-50 blur-[120px]" />
+    <div className="min-h-screen bg-background font-sans text-foreground antialiased">
 
-        <div className="container-padding relative z-10 mx-auto max-w-7xl">
-          <div className="grid items-center gap-16 lg:grid-cols-2">
-            {/* Left Content */}
-            <div className="animate-in fade-in slide-in-from-bottom-8 max-w-2xl space-y-8 duration-1000">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-semibold uppercase tracking-wide text-primary shadow-[0_0_15px_rgba(var(--primary),0.1)]">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
-                </span>
-                Transform your career
+      {/* ─── 1. Hero ───────────────────────────────────────────────────────── */}
+      <section className="flex flex-col items-center container-padding pb-0 pt-24 text-center">
+        <h1 className="mx-auto max-w-4xl text-[52px] font-semibold leading-[1.05] tracking-tight text-foreground sm:text-[68px] md:text-[84px]">
+          The easiest way to create, sell, and grow your courses
+        </h1>
+
+        <div className="mt-10">
+          <Link to="/signup">
+            <Button className="h-11 rounded-full bg-foreground px-8 text-sm font-semibold text-background hover:opacity-80">
+              Book Demo
+            </Button>
+          </Link>
+        </div>
+
+        {/* Product Screenshot */}
+        <div className="relative mx-auto mt-14 w-full max-w-6xl">
+          <div className="rounded-3xl border border-border/60 bg-zinc-100/80 p-2 shadow-2xl dark:bg-zinc-900/50 sm:p-4 md:p-5">
+            <div className="overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm">
+              <img 
+                src={homePageImg} 
+                alt="Coursivo Course Builder Dashboard" 
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background via-background/80 to-transparent" />
+        </div>
+      </section>
+
+      {/* ─── 2. Features ───────────────────────────────────────────────────── */}
+      <section className="container-padding py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-14 text-center">
+            <h2 className="mb-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+              Packed with thousands of features
+            </h2>
+            <p className="mx-auto max-w-2xl text-base text-muted-foreground">
+              From course creation to student management, Coursivo offers everything you need
+              to launch, scale, and monetize your courses.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-px bg-border border border-border sm:grid-cols-2 md:grid-cols-4">
+            {FEATURES.map(({ icon: Icon, label, title, desc }: {
+              icon?: React.ElementType;
+              label?: string;
+              title: string;
+              desc: string;
+            }) => (
+              <div key={title} className="bg-background p-7 transition-colors hover:bg-muted/20">
+                <div className="mb-3 flex h-7 w-7 items-center justify-center">
+                  {label ? (
+                    <span className="text-sm font-semibold text-muted-foreground">{label}</span>
+                  ) : Icon ? (
+                    <Icon className="h-5 w-5 text-muted-foreground" />
+                  ) : null}
+                </div>
+                <h3 className="mb-2 text-sm font-semibold text-foreground">{title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight text-foreground lg:text-7xl">
-                Unlock your <br />
-                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  true potential
-                </span>
-              </h1>
+      {/* ─── 3. Pricing ────────────────────────────────────────────────────── */}
+      <section className="container-padding py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-12 text-center">
+            <h2 className="mb-3 text-5xl font-semibold tracking-tight text-foreground md:text-6xl">
+              Pricing
+            </h2>
+            <p className="text-base text-muted-foreground">
+              Choose the plan that suits your needs. No hidden fees. Cancel at any time.
+            </p>
 
-              <p className="max-w-xl text-lg leading-relaxed text-muted-foreground lg:text-xl">
-                Master the world's most in-demand skills with expert-led
-                courses, hands-on projects, and a community of ambitious
-                learners.
-              </p>
+            <div className="mt-6 inline-flex items-center rounded-full border border-border bg-muted/30 p-1">
+              <button
+                onClick={() => setBilling("monthly")}
+                className={`rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${
+                  billing === "monthly"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBilling("annually")}
+                className={`rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${
+                  billing === "annually"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Annually
+              </button>
+            </div>
+          </div>
 
-              <div className="flex flex-col gap-4 pt-4 sm:flex-row">
-                <Link to="/courses">
-                  <Button className="h-11 w-full px-6 text-sm font-bold shadow-xl shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-primary/30 sm:w-auto">
-                    Explore 10,000+ Courses
-                  </Button>
-                </Link>
+          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+            {PRICING_PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className={`relative flex flex-col rounded-xl border p-7 ${
+                  plan.popular
+                    ? "border-foreground bg-background shadow-sm"
+                    : "border-border bg-background"
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 right-6 rounded-full bg-foreground px-3 py-0.5 text-[11px] font-semibold text-background">
+                    Popular
+                  </div>
+                )}
+                <div className="mb-1 text-lg font-semibold text-foreground">{plan.name}</div>
+                <p className="mb-6 text-sm text-muted-foreground">{plan.desc}</p>
+                <div className="mb-6 flex items-baseline gap-1">
+                  <span className="text-4xl font-semibold text-foreground">{plan.price}</span>
+                  <span className="text-sm text-muted-foreground">{plan.period}</span>
+                </div>
+                <ul className="mb-8 flex-1 space-y-3">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
                 <Link to="/signup">
                   <Button
-                    variant="outline"
-                    className="h-11 w-full bg-background/50 px-6 text-sm font-bold backdrop-blur-sm transition-all hover:-translate-y-0.5 sm:w-auto"
+                    className={`w-full rounded-md font-semibold ${
+                      plan.popular
+                        ? "bg-foreground text-background hover:opacity-80"
+                        : "border border-border bg-background text-foreground hover:bg-muted/30"
+                    }`}
+                    variant={plan.popular ? "default" : "outline"}
                   >
-                    Join for Free
+                    Get Started
                   </Button>
                 </Link>
-              </div>
-
-              <div className="flex items-center gap-6 border-t border-border/50 pt-6">
-                <div className="flex -space-x-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-background bg-muted shadow-sm"
-                    >
-                      <img
-                        src={`https://i.pravatar.cc/100?img=${i + 10}`}
-                        alt="Student"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ))}
-                  <div className="z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 border-background bg-primary shadow-sm">
-                    <span className="text-xs font-bold text-primary-foreground">
-                      +50k
-                    </span>
-                  </div>
-                </div>
-                <div className="text-sm">
-                  <div className="flex items-center gap-1 text-orange-400">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
-                  <span className="font-semibold text-foreground">4.8/5</span>{" "}
-                  <span className="text-muted-foreground">
-                    from 10k+ reviews
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Visual Floating Elements */}
-            <div className="animate-in fade-in slide-in-from-right-8 relative hidden h-[600px] delay-200 duration-1000 lg:block">
-              {/* Main abstract window */}
-              <div className="absolute right-0 top-1/2 aspect-square w-[85%] -translate-y-1/2 overflow-hidden rounded border border-border/50 bg-gradient-to-br from-primary/20 to-accent/20 shadow-2xl backdrop-blur-md">
-                {/* Internal grid mock */}
-                <div className="relative h-full w-full p-8">
-                  <div className="mb-6 h-8 w-3/4 rounded bg-background/50 backdrop-blur"></div>
-                  <div className="mb-4 h-32 w-full rounded bg-background/50 backdrop-blur"></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="h-24 rounded bg-background/50 backdrop-blur"></div>
-                    <div className="h-24 rounded bg-background/50 backdrop-blur"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating Card 1 */}
-              <div className="absolute -left-[10%] top-[20%] w-64 -rotate-3 transform rounded border border-border bg-card p-4 shadow-2xl">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded bg-primary/10 text-primary">
-                    <Award className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-foreground">
-                      Industry Certified
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Recognized worldwide
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating Card 2 */}
-              <div className="absolute -left-[5%] bottom-[25%] w-72 rotate-2 transform rounded border border-border bg-card p-4 shadow-2xl transition-all duration-300 hover:rotate-0">
-                <div className="flex items-center gap-4">
-                  <div className="relative h-12 w-12">
-                    <div className="absolute inset-0 animate-ping rounded bg-orange-400/20"></div>
-                    <div className="relative flex h-full w-full items-center justify-center rounded bg-orange-400/10 text-orange-500">
-                      <PlayCircle className="h-6 w-6" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-bold text-foreground">
-                      2,500+ Hours
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Of premium video content
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Key Value Props */}
-      <section className="border-b border-border bg-background py-20">
-        <div className="container-padding mx-auto max-w-7xl">
-          <div className="mx-auto mb-16 max-w-2xl text-center">
-            <h2 className="mb-3 text-sm font-bold uppercase tracking-widest text-primary">
-              Why Coursivo?
-            </h2>
-            <h3 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              Built for modern learners
-            </h3>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-3">
-            {[
-              {
-                icon: Target,
-                title: "Learn at your own pace",
-                desc: "Access high-quality video courses 24/7 on any device. Lifetime access included.",
-              },
-              {
-                icon: Zap,
-                title: "Learn by doing",
-                desc: "Interactive quizzes, coding exercises, and real-world projects that put skills to the test.",
-              },
-              {
-                icon: Globe,
-                title: "Global community",
-                desc: "Join thousands of learners worldwide. Network, share, and grow together.",
-              },
-            ].map((prop, i) => (
-              <div
-                key={i}
-                className="group rounded border border-border/50 bg-muted/20 p-8 transition-colors hover:bg-muted/50"
-              >
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
-                  <prop.icon className="h-6 w-6" />
-                </div>
-                <h4 className="mb-3 text-xl font-bold text-foreground">
-                  {prop.title}
-                </h4>
-                <p className="leading-relaxed text-muted-foreground">
-                  {prop.desc}
-                </p>
+                {plan.exploreMore && (
+                  <Link to="/courses" className="mt-3 flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+                    Explore more <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                )}
               </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* 3. Featured Courses */}
-      <section className="container-padding mx-auto max-w-7xl py-24">
-        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="max-w-2xl">
-            <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              Top courses right now
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              The most popular choices from our global community of learners.
-            </p>
-          </div>
-          <Link to="/courses" className="hidden shrink-0 md:inline-flex">
-            <Button variant="outline" className="group font-semibold">
-              View all courses
-              <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
-        </div>
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-32">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl"></div>
-              <Loader2 className="relative h-10 w-10 animate-spin text-primary" />
-            </div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Shield className="mb-4 h-12 w-12 text-destructive opacity-50" />
-            <p className="font-medium text-destructive">{error}</p>
-            <Button
-              variant="outline"
-              onClick={() => window.location.reload()}
-              className="mt-4"
-            >
-              Try Again
-            </Button>
-          </div>
-        )}
-
-        {/* Courses Grid */}
-        {!isLoading && !error && courses.length > 0 && (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-            {courses.slice(0, 10).map((course) => (
-              <div key={course.id}>
-                <CourseCard course={course} />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && !error && courses.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded border border-dashed border-border border-border/50 bg-muted/10 py-32 text-center">
-            <BookOpen className="mb-6 h-16 w-16 text-muted-foreground/30" />
-            <p className="mb-2 text-xl font-bold text-foreground">
-              No courses published yet
-            </p>
-            <p className="max-w-sm text-muted-foreground">
-              We're working hard to bring you the best content. Check back very
-              soon!
-            </p>
-          </div>
-        )}
-
-        {/* Mobile View All */}
-        <div className="mt-10 text-center md:hidden">
-          <Link to="/courses">
-            <Button
-              variant="outline"
-              size="lg"
-              className="group w-full font-semibold"
-            >
-              Explore all courses
-              <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* 4. Instructor CTA */}
-      <section className="relative isolate overflow-hidden bg-zinc-950 py-24 text-zinc-50">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.08),transparent_40%)]" />
-
-        <div className="container-padding relative z-10 mx-auto max-w-7xl">
-          <div className="grid items-center gap-16 lg:grid-cols-2">
-            <div className="order-2 lg:order-1">
-              <div className="relative aspect-video overflow-hidden rounded-xl shadow-2xl">
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/40 to-black/90">
-                  <div className="group flex h-20 w-20 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur transition-transform duration-300 hover:scale-110">
-                    <PlayCircle className="h-10 w-10 translate-x-0.5 text-white transition-colors group-hover:text-primary" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="order-1 space-y-6 lg:order-2">
-              <h2 className="mb-6 text-4xl font-extrabold tracking-tight text-white md:text-5xl">
-                Become an instructor
-              </h2>
-              <p className="mb-8 text-xl leading-relaxed text-white/70">
-                Share your knowledge with millions of students across the globe.
-                We provide the tools, you provide the expertise. Start teaching
-                today and earn while you empower others.
-              </p>
-
-              <ul className="mb-10 space-y-5 text-white/80">
-                {[
-                  "Publish your course your way",
-                  "Build your personal brand",
-                  "Earn money from every enrollment",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
-                      <CheckCircle2 className="h-5 w-5" />
+          {/* Free tier */}
+          <div className="rounded-xl border border-border bg-background p-8 md:flex md:items-center md:justify-between md:gap-12">
+            <div className="mb-6 md:mb-0 md:flex-1">
+              <h3 className="mb-1 text-2xl font-semibold text-foreground">Free</h3>
+              <p className="text-sm text-muted-foreground">Get all goodies for free, no credit card required.</p>
+              <p className="mt-4 mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Included features</p>
+              <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
+                {FREE_FEATURES.map((f) => (
+                  <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-foreground">
+                      <Check className="h-2.5 w-2.5 text-background" />
                     </div>
-                    <span className="text-lg font-medium">{item}</span>
-                  </li>
+                    {f}
+                  </div>
                 ))}
-              </ul>
-
+              </div>
+            </div>
+            <div className="flex flex-col items-center md:items-end">
+              <div className="mb-4 flex items-baseline gap-1">
+                <span className="text-5xl font-semibold text-foreground">$0</span>
+                <span className="text-sm text-muted-foreground">/mon</span>
+              </div>
               <Link to="/signup">
-                <Button
-                  size="lg"
-                  className="h-14 border-0 bg-primary px-8 text-lg font-bold text-primary-foreground shadow-xl shadow-primary/20 transition-transform duration-300 hover:scale-105 hover:bg-primary/90"
-                >
-                  Start teaching today
+                <Button className="w-40 rounded-md bg-foreground font-semibold text-background hover:opacity-80">
+                  Get Started
+                </Button>
+              </Link>
+              <p className="mt-2 text-center text-xs text-muted-foreground">No credit card required.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 4. Featured Courses ─────────────────────────────────────────── */}
+      {!isLoading && !error && courses.length > 0 && (
+        <section className="border-t border-border bg-background container-padding py-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+              <div>
+                <h2 className="text-4xl font-semibold tracking-tight text-foreground">Top courses right now</h2>
+                <p className="mt-2 text-base text-muted-foreground">The most popular choices from learners worldwide.</p>
+              </div>
+              <Link to="/courses" className="hidden md:block">
+                <Button variant="outline" className="rounded-full border-border font-semibold text-foreground">
+                  View all <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               </Link>
             </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+              {courses.slice(0, 10).map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
           </div>
+        </section>
+      )}
+
+      {isLoading && (
+        <section className="border-t border-border bg-background container-padding py-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+              <div>
+                <h2 className="text-4xl font-semibold tracking-tight text-foreground">Top courses right now</h2>
+                <p className="mt-2 text-base text-muted-foreground">The most popular choices from learners worldwide.</p>
+              </div>
+              <div className="hidden md:block">
+                <Button variant="outline" className="rounded-full border-border font-semibold text-foreground" disabled>
+                  View all <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+              {[...Array(10)].map((_, i) => (
+                <CourseCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {error && (
+        <div className="flex flex-col items-center border-t border-border py-16 text-center">
+          <Shield className="mb-3 h-8 w-8 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-3 rounded-full">
+            Try Again
+          </Button>
+        </div>
+      )}
+
+      {/* ─── 5. Dark CTA ───────────────────────────────────────────────────── */}
+      <section className="border-t border-border bg-background container-padding py-20 text-center">
+        <div className="mx-auto max-w-2xl">
+          <h2 className="mb-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+            Ready to signup and join the waitlist?
+          </h2>
+          <p className="mb-10 text-sm text-muted-foreground">
+            Get instant access to our state of the art project and join the waitlist to get early access to all the features.
+          </p>
+          <Link to="/signup">
+            <Button className="h-11 rounded-full bg-foreground px-8 text-sm font-semibold text-background hover:opacity-80">
+              Book Demo
+            </Button>
+          </Link>
         </div>
       </section>
+
+      {/* ─── 6. Footer ─────────────────────────────────────────────────────── */}
+      <footer className="border-t border-border bg-background container-padding py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+            <div className="shrink-0">
+              <div className="mb-2 flex items-center gap-1.5">
+                <div className="h-4 w-4 rounded-sm bg-foreground" />
+                <span className="text-sm font-normal text-foreground">Coursivo</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Copyright © 2026 Coursivo Technologies Pvt. Ltd.<br />All rights reserved.
+              </p>
+            </div>
+            <div className="flex gap-16">
+              {Object.entries(FOOTER_LINKS).map(([, links], i) => (
+                <ul key={i} className="space-y-3">
+                  {links.map(({ label, href }) => (
+                    <li key={label}>
+                      <Link to={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

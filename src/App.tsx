@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "./components/layout/Navbar";
@@ -48,18 +48,26 @@ function PageLoader() {
 // Layout wrapper that conditionally shows Navbar
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+
+  // Initialize theme globally
+  useEffect(() => {
+    const THEME_KEY = "coursivo_theme";
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (savedTheme === "light") {
+      document.documentElement.classList.remove("dark");
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
   const isAuthPage =
     location.pathname === "/login" || location.pathname === "/signup";
   const isInstructorPage = location.pathname.startsWith("/instructor");
   const isStudentDashboard =
     location.pathname === "/dashboard" ||
-    location.pathname.startsWith("/my-courses") ||
-    location.pathname.startsWith("/progress") ||
-    location.pathname.startsWith("/certificates") ||
-    location.pathname.startsWith("/wishlist") ||
-    location.pathname.startsWith("/watch-later") ||
-    location.pathname.startsWith("/settings") ||
-    location.pathname.startsWith("/help");
+    location.pathname.startsWith("/my-courses");
 
   // Don't show Navbar for auth pages and dashboard layouts (they have their own sidebar)
   const showNavbar = !isAuthPage && !isInstructorPage && !isStudentDashboard;

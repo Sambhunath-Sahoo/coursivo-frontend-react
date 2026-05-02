@@ -4,53 +4,56 @@ interface LogoProps {
   className?: string;
 }
 
-// Professional logo icon for Coursivo - represents learning/growth with an abstract book + play button design
 export function Logo({
   size = "md",
   showText = true,
   className = "",
 }: LogoProps) {
   const sizes = {
-    sm: { icon: 24, text: "text-lg" },
+    sm: { icon: 24, text: "text-base" },
     md: { icon: 32, text: "text-xl" },
-    lg: { icon: 40, text: "text-2xl" },
+    lg: { icon: 44, text: "text-2xl" },
   };
 
   const { icon: iconSize, text: textSize } = sizes[size];
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Logo Icon - Abstract book with play button, representing learning content */}
+    <div className={`flex items-center gap-2.5 ${className}`}>
       <svg
         width={iconSize}
         height={iconSize}
-        viewBox="0 0 40 40"
+        viewBox="0 0 44 44"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="shrink-0"
       >
-        {/* Background circle */}
-        <rect width="40" height="40" rx="8" className="fill-primary" />
-        {/* Play/Learn symbol - combines book spine with forward arrow */}
+        {/* Container */}
+        <rect width="44" height="44" rx="11" fill="#000000" />
+
+        {/* Bold C arc — 290° arc, opens to the right */}
+        {/* Center ≈ (20, 22), radius 12 */}
+        {/* Top terminal ≈ (29, 14.5), bottom terminal ≈ (29, 29.5) */}
         <path
-          d="M12 10C12 9.44772 12.4477 9 13 9H16C16.5523 9 17 9.44772 17 10V30C17 30.5523 16.5523 31 16 31H13C12.4477 31 12 30.5523 12 30V10Z"
-          className="fill-primary-foreground"
-          opacity="0.9"
+          d="M29 14.5 A12 12 0 1 0 29 29.5"
+          stroke="white"
+          strokeWidth="5.5"
+          strokeLinecap="round"
+          fill="none"
         />
-        {/* Forward arrow / play button */}
-        <path d="M20 14L30 20L20 26V14Z" className="fill-primary-foreground" />
+
+        {/* Spark — small filled circle in the C opening, top area */}
+        <circle cx="33" cy="11.5" r="3" fill="white" />
       </svg>
 
       {showText && (
-        <span className={`font-bold tracking-tight text-current ${textSize}`}>
-          coursivo
+        <span className={`font-normal tracking-normal text-foreground ${textSize}`}>
+          Coursivo
         </span>
       )}
     </div>
   );
 }
 
-// Simple icon-only version for collapsed sidebar
 export function LogoIcon({
   size = 32,
   className = "",
@@ -62,21 +65,20 @@ export function LogoIcon({
     <svg
       width={size}
       height={size}
-      viewBox="0 0 40 40"
+      viewBox="0 0 44 44"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={`shrink-0 ${className}`}
     >
-      {/* Background */}
-      <rect width="40" height="40" rx="8" className="fill-primary" />
-      {/* Book spine */}
+      <rect width="44" height="44" rx="11" fill="#000000" />
       <path
-        d="M12 10C12 9.44772 12.4477 9 13 9H16C16.5523 9 17 9.44772 17 10V30C17 30.5523 16.5523 31 16 31H13C12.4477 31 12 30.5523 12 30V10Z"
-        className="fill-primary-foreground"
-        opacity="0.9"
+        d="M29 14.5 A12 12 0 1 0 29 29.5"
+        stroke="white"
+        strokeWidth="5.5"
+        strokeLinecap="round"
+        fill="none"
       />
-      {/* Play arrow */}
-      <path d="M20 14L30 20L20 26V14Z" className="fill-primary-foreground" />
+      <circle cx="33" cy="11.5" r="3" fill="white" />
     </svg>
   );
 }
