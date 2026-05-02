@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { courseService } from "@/api/course.service";
 import { enrollmentService } from "@/api/enrollment.service";
 import type { Course } from "@/types/course.types";
@@ -16,7 +16,6 @@ import {
   Zap,
   CalendarDays,
   BadgeIndianRupee,
-  ChevronRight,
   ChevronDown,
   FileText,
   Clock,

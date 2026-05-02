@@ -19,27 +19,27 @@ All colors are defined as OKLCH lightness values in `src/index.css`.
 ### Light Mode
 | Token | Value | Purpose |
 |---|---|---|
-| `--background` | `oklch(1.0 0 0)` | Page background (`#ffffff`) |
-| `--foreground` | `oklch(0.15 0 0)` | Body text (near-black) |
-| `--primary` | `oklch(0.15 0 0)` | Black buttons, key actions |
-| `--muted` | `oklch(0.96 0 0)` | Subtle backgrounds |
-| `--muted-foreground` | `oklch(0.55 0 0)` | Secondary/helper text |
-| `--border` | `oklch(0.92 0 0)` | All borders |
-| `--sidebar` | `oklch(0.97 0 0)` | Sidebar background (near-white) |
-| `--sidebar-foreground` | `oklch(0.35 0 0)` | Sidebar inactive text (gray-700) |
-| `--sidebar-accent` | `oklch(0.90 0 0)` | Active/hover pill background |
-| `--sidebar-accent-foreground` | `oklch(0.13 0 0)` | Active nav item text (near-black) |
-| `--sidebar-border` | `oklch(0.90 0 0)` | Sidebar separator |
+| `--background` | `oklch(1.0000 0 0)` | Page background (`#ffffff`) |
+| `--foreground` | `oklch(0.1884 0.0128 248.5103)` | Body text (near-black) |
+| `--primary` | `oklch(0.1884 0.0128 248.5103)` | Black buttons, key actions |
+| `--muted` | `oklch(0.9222 0.0013 286.3737)` | Subtle backgrounds |
+| `--muted-foreground` | `oklch(0.1884 0.0128 248.5103)` | Secondary/helper text |
+| `--border` | `oklch(0.9317 0.0118 231.6594)` | All borders |
+| `--sidebar` | `oklch(0.9784 0.0011 197.1387)` | Sidebar background (near-white) |
+| `--sidebar-foreground` | `oklch(0.1884 0.0128 248.5103)` | Sidebar inactive text (gray-700) |
+| `--sidebar-accent` | `oklch(0.9392 0.0166 250.8453)` | Active/hover pill background |
+| `--sidebar-accent-foreground` | `oklch(0.1884 0.0128 248.5103)` | Active nav item text (near-black) |
+| `--sidebar-border` | `oklch(0.9271 0.0101 238.5177)` | Sidebar separator |
 
 ### Dark Mode
 | Token | Value | Purpose |
 |---|---|---|
-| `--background` | `oklch(0.20 0 0)` | Off-black page bg (`~#1a1a1a`) |
-| `--foreground` | `oklch(0.95 0 0)` | Body text (near-white) |
-| `--primary` | `oklch(0.95 0 0)` | White buttons |
-| `--sidebar` | `oklch(0.20 0 0)` | Sidebar background (same as page) |
-| `--sidebar-foreground` | `oklch(0.95 0 0)` | Sidebar text |
-| `--sidebar-accent` | `oklch(0.25 0 0)` | Active/hover pill |
+| `--background` | `oklch(0 0 0)` | Off-black page bg (`#000000`) |
+| `--foreground` | `oklch(0.9328 0.0025 228.7857)` | Body text (near-white) |
+| `--primary` | `oklch(0.9328 0.0025 228.7857)` | White buttons |
+| `--sidebar` | `oklch(0 0 0)` | Sidebar background (same as page) |
+| `--sidebar-foreground` | `oklch(0.9328 0.0025 228.7857)` | Sidebar text |
+| `--sidebar-accent` | `oklch(0.1928 0.0331 242.5459)` | Active/hover pill |
 
 ---
 

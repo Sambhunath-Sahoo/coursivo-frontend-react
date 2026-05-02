@@ -5,13 +5,15 @@ React 19 + TypeScript + Vite frontend for Coursivo — an EdTech platform for ed
 ## Tech Stack
 
 - **React 19** + **TypeScript** + **Vite 7**
-- **Tailwind CSS v3** + **shadcn/ui** (Radix UI primitives) — add components via `npx shadcn@latest add [name]`
+- **Tailwind CSS v3** + **shadcn/ui** (Radix UI primitives)
+- **Design System**: "Editorial Scholar" (High-contrast, minimalist, OKLCH colors)
 - **Redux Toolkit v2** + **React Redux v9** for state management
 - **React Router v7** for routing
 - **next-themes** for dark/light mode toggle
 - **lucide-react** for icons
 - **sonner** for toast notifications
 - **@dnd-kit** for drag-and-drop
+- **Prettier** for code formatting
 
 ## Project Structure
 
@@ -39,6 +41,7 @@ npm install
 npm run dev       # starts on port 5173
 npm run build     # type-check + build
 npm run lint      # ESLint
+npm run format    # Prettier
 ```
 
 ## Path Aliases

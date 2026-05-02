@@ -1,95 +1,68 @@
-# React + TypeScript + Vite
+# Coursivo Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + TypeScript + Vite frontend for Coursivo — an EdTech platform for educators to sell courses and test series.
 
-## Environment Variables
+## Features
 
-This project uses environment variables for configuration. Create a `.env` file in the root directory with the following variables:
+- **Course Builder**: Intuitive drag-and-drop course creation.
+- **Instructor Dashboard**: Detailed analytics and course management.
+- **Student Experience**: Seamless course consumption and testing.
+- **Editorial Scholar UI**: Premium, high-contrast design system.
+
+## Tech Stack
+
+- **React 19**
+- **TypeScript**
+- **Vite 7**
+- **Tailwind CSS v3** (OKLCH colors)
+- **shadcn/ui**
+- **Redux Toolkit**
+- **React Router 7**
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- npm 10+
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
 
 ```env
-# Backend API URL
 VITE_API_URL=http://localhost:8080/api/v1
 ```
 
-**Important Notes:**
-- All environment variables must be prefixed with `VITE_` to be accessible in the browser
-- The `.env` file is already added to `.gitignore` and should not be committed to version control
-- Create a `.env.example` file (without sensitive values) as a template for other developers
-- Restart the dev server after creating or modifying the `.env` file
+### Development
 
-### Example `.env.example`:
-```env
-# Backend API URL
-# Replace with your actual backend URL
-VITE_API_URL=http://localhost:8080/api/v1
+```bash
+# Start development server
+npm run dev
 ```
 
-Currently, two official plugins are available:
+The app will be available at `http://localhost:5173`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Build & Lint
 
-## React Compiler
+```bash
+# Type-check and build for production
+npm run build
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+# Run ESLint
+npm run lint
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Format code with Prettier
+npm run format
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Related Projects
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- [coursivo-backend](../coursivo-backend): Spring Boot 4.0 API.
