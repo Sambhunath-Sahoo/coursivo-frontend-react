@@ -292,29 +292,11 @@ export default function CourseDetail() {
       <div className="border-b border-border pt-24 pb-6">
         <div className="mx-auto max-w-7xl container-padding">
 
-          {/* Breadcrumb */}
-          <nav className="mb-5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
-            <Link to="/courses" className="transition-colors hover:text-foreground">
-              Courses
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="line-clamp-1 text-foreground">{course.title}</span>
-          </nav>
+
 
           <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
             {/* Left — headline block */}
             <div className="min-w-0 flex-1">
-              {/* Badges */}
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                {isFreeCard && (
-                  <span className="rounded-full bg-foreground px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-background">
-                    Free
-                  </span>
-                )}
-                <span className="rounded-full border border-border px-3 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {course.status}
-                </span>
-              </div>
 
               <h1 className="mb-3 text-3xl font-semibold leading-tight tracking-tight text-foreground md:text-4xl lg:text-5xl">
                 {course.title}
