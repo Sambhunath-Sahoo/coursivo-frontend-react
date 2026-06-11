@@ -9,6 +9,9 @@ export interface CourseInstructor {
 // Course status
 export type CourseStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
+// Difficulty level
+export type DifficultyLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+
 // Section with nested lessons from API
 export interface SectionResponse {
   id: number;
@@ -28,7 +31,20 @@ export interface Course {
   thumbnailUrl: string;
   instructor: CourseInstructor;
   status: CourseStatus;
+  difficultyLevel: DifficultyLevel | null;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
   sections?: SectionResponse[];
+}
+
+// Generic paginated response from the API
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
 }

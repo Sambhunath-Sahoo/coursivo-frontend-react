@@ -3,6 +3,50 @@ import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Course } from "@/types/course.types";
 
+// Deterministic gradient placeholder based on course id
+const GRADIENTS = [
+  "from-violet-500 to-purple-700",
+  "from-sky-500 to-blue-700",
+  "from-emerald-500 to-teal-700",
+  "from-amber-400 to-orange-600",
+  "from-rose-500 to-pink-700",
+  "from-indigo-500 to-blue-800",
+  "from-cyan-400 to-sky-600",
+  "from-fuchsia-500 to-purple-800",
+];
+
+function CourseThumbnail({ id, title, thumbnailUrl, className }: { id: number; title: string; thumbnailUrl: string | null; className?: string }) {
+  if (!thumbnailUrl) {
+    const gradient = GRADIENTS[id % GRADIENTS.length];
+    const initials = title.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+    return (
+      <div className={cn(`flex items-center justify-center bg-gradient-to-br ${gradient}`, className)}>
+        <span className="select-none text-2xl font-bold text-white/80 drop-shadow">{initials}</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={thumbnailUrl}
+      alt={title}
+      className={cn("object-cover transition-transform duration-300 group-hover:scale-105", className)}
+      onError={(e) => {
+        // swap to gradient on broken URL
+        const parent = e.currentTarget.parentElement;
+        if (parent) {
+          e.currentTarget.remove();
+          const gradient = GRADIENTS[id % GRADIENTS.length];
+          parent.className = cn(parent.className, `bg-gradient-to-br ${gradient} flex items-center justify-center`);
+          const span = document.createElement("span");
+          span.className = "select-none text-2xl font-bold text-white/80 drop-shadow";
+          span.textContent = title.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+          parent.appendChild(span);
+        }
+      }}
+    />
+  );
+}
+
 export interface CourseCardProps {
   course: Course;
   className?: string;
@@ -61,15 +105,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
     >
       {/* Thumbnail */}
       <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        <img
-          src={thumbnailUrl}
-          alt={title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://placehold.co/640x360/f4f4f5/a1a1aa?text=Course";
-          }}
-        />
+        <CourseThumbnail id={course.id} title={title} thumbnailUrl={thumbnailUrl} className="h-full w-full" />
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-foreground/0 transition-colors duration-200 group-hover:bg-foreground/5" />
         {/* Free badge */}
@@ -157,14 +193,7 @@ export function CourseListItem({ course }: { course: Course }) {
       className="group flex items-center gap-5 rounded-xl border border-border bg-background p-4 transition-all duration-200 hover:border-foreground/20 hover:shadow-sm"
     >
       <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-lg bg-muted">
-        <img
-          src={thumbnailUrl}
-          alt={title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src = "https://placehold.co/320x180/f4f4f5/a1a1aa?text=Course";
-          }}
-        />
+        <CourseThumbnail id={course.id} title={title} thumbnailUrl={thumbnailUrl} className="h-full w-full" />
         {isFreeCard && (
           <span className="absolute left-2 top-2 rounded-full bg-foreground px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-background">
             Free

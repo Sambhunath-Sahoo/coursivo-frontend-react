@@ -1,88 +1,164 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CourseCard, CourseCardSkeleton, ListSkeleton, CourseListItem } from "@/components/CourseCard";
 import { courseService } from "@/api/course.service";
-import type { Course } from "@/types/course.types";
-import { BookOpen, LayoutGrid, LayoutList, Shield, SlidersHorizontal, X } from "lucide-react";
+import type { Course, DifficultyLevel, PageResponse } from "@/types/course.types";
+import {
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  LayoutList,
+  Shield,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type PriceFilter = "all" | "free" | "paid";
-type SortOption = "default" | "price-asc" | "price-desc" | "name-asc" | "name-desc";
+type PriceFilter = "ALL" | "FREE" | "PAID";
+type SortOption = "newest" | "price_asc" | "price_desc" | "name_asc" | "name_desc";
+type DifficultyFilter = DifficultyLevel | "";
 
 const SORT_LABELS: Record<SortOption, string> = {
-  default: "Featured",
-  "price-asc": "Price: Low to High",
-  "price-desc": "Price: High to Low",
-  "name-asc": "Name: A → Z",
-  "name-desc": "Name: Z → A",
+  newest: "Featured",
+  price_asc: "Price: Low to High",
+  price_desc: "Price: High to Low",
+  name_asc: "Name: A → Z",
+  name_desc: "Name: Z → A",
 };
 
+const DIFFICULTY_LABELS: Record<DifficultyFilter, string> = {
+  "": "All Levels",
+  BEGINNER: "Beginner",
+  INTERMEDIATE: "Intermediate",
+  ADVANCED: "Advanced",
+};
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  BEGINNER: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  INTERMEDIATE: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  ADVANCED: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+};
+
+const PAGE_SIZE = 12;
+
+// ─── Debounce hook ────────────────────────────────────────────────────────────
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function Courses() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [pageData, setPageData] = useState<PageResponse<Course> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filters
   const [query, setQuery] = useState("");
-  const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
-  const [sort, setSort] = useState<SortOption>("default");
+  const debouncedQuery = useDebounce(query, 300);
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>("ALL");
+  const [difficulty, setDifficulty] = useState<DifficultyFilter>("");
+  const [sort, setSort] = useState<SortOption>("newest");
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [sortOpen, setSortOpen] = useState(false);
+  const [page, setPage] = useState(0);
+
+  // Track previous params to reset page on filter change
+  const prevFiltersRef = useRef({ debouncedQuery, priceFilter, difficulty, sort });
+
+  // Reset page to 0 whenever a filter changes (not on page change itself)
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+    if (
+      prev.debouncedQuery !== debouncedQuery ||
+      prev.priceFilter !== priceFilter ||
+      prev.difficulty !== difficulty ||
+      prev.sort !== sort
+    ) {
+      setPage(0);
+      prevFiltersRef.current = { debouncedQuery, priceFilter, difficulty, sort };
+    }
+  }, [debouncedQuery, priceFilter, difficulty, sort]);
+
+  const fetchCourses = useCallback(
+    (signal: AbortSignal) => {
+      setIsLoading(true);
+      setError(null);
+      courseService
+        .searchCourses(
+          {
+            q: debouncedQuery || undefined,
+            difficulty: difficulty || undefined,
+            priceType: priceFilter,
+            sort,
+            page,
+            size: PAGE_SIZE,
+          },
+          signal,
+        )
+        .then((data) => {
+          setPageData(data);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          if ((err as Error).name === "AbortError") return;
+          setError(err instanceof Error ? err.message : "Failed to load courses");
+          setIsLoading(false);
+        });
+    },
+    [debouncedQuery, priceFilter, difficulty, sort, page],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    const fetchCourses = async () => {
-      try {
-        const data = await courseService.getPublicCourses(controller.signal);
-        setCourses(data);
-      } catch (err) {
-        if ((err as Error).name === "AbortError") return;
-        setError(err instanceof Error ? err.message : "Failed to load courses");
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
-      }
-    };
-    fetchCourses();
+    fetchCourses(controller.signal);
     return () => controller.abort();
-  }, []);
+  }, [fetchCourses]);
 
-  // Active filter count (excluding defaults)
+  const courses = pageData?.content ?? [];
+  const totalElements = pageData?.totalElements ?? 0;
+  const totalPages = pageData?.totalPages ?? 0;
+
   const activeFilterCount = [
-    priceFilter !== "all",
-    sort !== "default",
+    priceFilter !== "ALL",
+    difficulty !== "",
+    sort !== "newest",
   ].filter(Boolean).length;
-
-  const filtered = useMemo(() => {
-    let result = [...courses];
-
-    // Search
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.title.toLowerCase().includes(q) ||
-          c.instructor.fullName.toLowerCase().includes(q),
-      );
-    }
-
-    // Price
-    if (priceFilter === "free") result = result.filter((c) => c.isFree || c.price === 0);
-    if (priceFilter === "paid") result = result.filter((c) => !c.isFree && c.price > 0);
-
-    // Sort
-    if (sort === "price-asc") result.sort((a, b) => a.price - b.price);
-    if (sort === "price-desc") result.sort((a, b) => b.price - a.price);
-    if (sort === "name-asc") result.sort((a, b) => a.title.localeCompare(b.title));
-    if (sort === "name-desc") result.sort((a, b) => b.title.localeCompare(a.title));
-
-    return result;
-  }, [courses, query, priceFilter, sort]);
 
   const clearAll = () => {
     setQuery("");
-    setPriceFilter("all");
-    setSort("default");
+    setPriceFilter("ALL");
+    setDifficulty("");
+    setSort("newest");
+    setPage(0);
   };
+
+  // ── Pagination helpers ──────────────────────────────────────────────────────
+
+  const goToPage = (p: number) => {
+    if (p < 0 || p >= totalPages) return;
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const pageNumbers = (() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i);
+    const nums: (number | "…")[] = [];
+    if (page > 2) nums.push(0, "…");
+    else for (let i = 0; i < Math.min(page, 3); i++) nums.push(i);
+    for (let i = Math.max(0, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) nums.push(i);
+    if (page < totalPages - 3) nums.push("…", totalPages - 1);
+    else for (let i = Math.max(page + 1, totalPages - 3); i < totalPages; i++) nums.push(i);
+    // deduplicate
+    return nums.filter((v, i, arr) => arr.indexOf(v) === i);
+  })();
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground antialiased">
@@ -112,8 +188,9 @@ export default function Courses() {
                 <path d="m21 21-4.35-4.35" />
               </svg>
               <input
+                id="course-search"
                 type="text"
-                placeholder="Search courses or instructors…"
+                placeholder="Search courses, topics or instructors…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="h-12 w-full rounded-full border border-border bg-muted/40 pl-11 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground/30 focus:bg-background focus:outline-none"
@@ -148,9 +225,28 @@ export default function Courses() {
 
           <div className="h-4 w-px bg-border" />
 
+          {/* Difficulty filter pills */}
+          <div className="flex items-center gap-1.5">
+            {(["", "BEGINNER", "INTERMEDIATE", "ADVANCED"] as DifficultyFilter[]).map((d) => (
+              <button
+                key={d || "all"}
+                onClick={() => setDifficulty(d)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                  difficulty === d
+                    ? "bg-foreground text-background"
+                    : "border border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted/30"
+                }`}
+              >
+                {DIFFICULTY_LABELS[d]}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-4 w-px bg-border" />
+
           {/* Price filter pills */}
           <div className="flex items-center gap-1.5">
-            {(["all", "free", "paid"] as PriceFilter[]).map((p) => (
+            {(["ALL", "FREE", "PAID"] as PriceFilter[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPriceFilter(p)}
@@ -160,7 +256,7 @@ export default function Courses() {
                     : "border border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted/30"
                 }`}
               >
-                {p === "all" ? "All Prices" : p === "free" ? "Free" : "Paid"}
+                {p === "ALL" ? "All Prices" : p === "FREE" ? "Free" : "Paid"}
               </button>
             ))}
           </div>
@@ -172,7 +268,7 @@ export default function Courses() {
             <button
               onClick={() => setSortOpen(!sortOpen)}
               className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                sort !== "default"
+                sort !== "newest"
                   ? "border-foreground bg-foreground text-background"
                   : "border-border bg-background text-muted-foreground hover:border-foreground/20 hover:bg-muted/30"
               }`}
@@ -259,7 +355,7 @@ export default function Courses() {
         {isLoading && (
           layout === "grid" ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-              {Array.from({ length: 10 }).map((_, i) => <CourseCardSkeleton key={i} />)}
+              {Array.from({ length: PAGE_SIZE }).map((_, i) => <CourseCardSkeleton key={i} />)}
             </div>
           ) : (
             <div className="space-y-3">
@@ -275,7 +371,7 @@ export default function Courses() {
             <p className="mb-1 text-base font-semibold text-foreground">Something went wrong</p>
             <p className="mb-6 text-sm text-muted-foreground">{error}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => { const c = new AbortController(); fetchCourses(c.signal); }}
               className="rounded-full bg-foreground px-6 py-2.5 text-sm font-semibold text-background hover:opacity-80"
             >
               Try again
@@ -284,36 +380,106 @@ export default function Courses() {
         )}
 
         {/* Results */}
-        {!isLoading && !error && filtered.length > 0 && (
+        {!isLoading && !error && courses.length > 0 && (
           <>
             {/* Results header */}
             <div className="mb-8 flex items-center justify-between">
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                {query || priceFilter !== "all" ? "Filtered results" : "All Courses"}
+                {debouncedQuery || priceFilter !== "ALL" || difficulty ? "Filtered results" : "All Courses"}
               </h2>
               <span className="rounded-full border border-border bg-muted/30 px-3.5 py-1 text-xs font-semibold text-muted-foreground">
-                {filtered.length} {filtered.length === 1 ? "course" : "courses"}
+                {totalElements.toLocaleString()} {totalElements === 1 ? "course" : "courses"}
               </span>
             </div>
 
             {layout === "grid" ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-                {filtered.map((course) => (
-                  <CourseCard key={course.id} course={course} />
+                {courses.map((course) => (
+                  <div key={course.id} className="group relative">
+                    <CourseCard course={course} />
+                    {/* Difficulty badge overlay */}
+                    {course.difficultyLevel && (
+                      <span className={`pointer-events-none absolute left-2 top-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${DIFFICULTY_COLORS[course.difficultyLevel]}`}>
+                        {DIFFICULTY_LABELS[course.difficultyLevel]}
+                      </span>
+                    )}
+                  </div>
                 ))}
               </div>
             ) : (
               <div className="space-y-3">
-                {filtered.map((course) => (
-                  <CourseListItem key={course.id} course={course} />
+                {courses.map((course) => (
+                  <div key={course.id} className="relative">
+                    <CourseListItem course={course} />
+                    {course.difficultyLevel && (
+                      <span className={`pointer-events-none absolute right-4 top-4 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${DIFFICULTY_COLORS[course.difficultyLevel]}`}>
+                        {DIFFICULTY_LABELS[course.difficultyLevel]}
+                      </span>
+                    )}
+                  </div>
                 ))}
               </div>
+            )}
+
+            {/* ── Pagination ──────────────────────────────────────────────── */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex items-center justify-center gap-1.5">
+                {/* Prev */}
+                <button
+                  onClick={() => goToPage(page - 1)}
+                  disabled={!pageData?.hasPrevious}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/40 disabled:pointer-events-none disabled:opacity-30"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                {/* Page numbers */}
+                {pageNumbers.map((pn, idx) =>
+                  pn === "…" ? (
+                    <span key={`ellipsis-${idx}`} className="flex h-9 w-9 items-center justify-center text-xs text-muted-foreground">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={pn}
+                      onClick={() => goToPage(pn as number)}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
+                        pn === page
+                          ? "bg-foreground text-background"
+                          : "border border-border bg-background text-muted-foreground hover:bg-muted/40"
+                      }`}
+                      aria-label={`Page ${(pn as number) + 1}`}
+                      aria-current={pn === page ? "page" : undefined}
+                    >
+                      {(pn as number) + 1}
+                    </button>
+                  )
+                )}
+
+                {/* Next */}
+                <button
+                  onClick={() => goToPage(page + 1)}
+                  disabled={!pageData?.hasNext}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/40 disabled:pointer-events-none disabled:opacity-30"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Page info */}
+            {totalPages > 1 && (
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                Page {page + 1} of {totalPages} · {totalElements.toLocaleString()} courses total
+              </p>
             )}
           </>
         )}
 
         {/* No results */}
-        {!isLoading && !error && courses.length > 0 && filtered.length === 0 && (
+        {!isLoading && !error && pageData && courses.length === 0 && totalElements > 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted/30">
               <BookOpen className="h-7 w-7 text-muted-foreground/40" />
@@ -334,7 +500,7 @@ export default function Courses() {
         )}
 
         {/* Empty catalog */}
-        {!isLoading && !error && courses.length === 0 && (
+        {!isLoading && !error && pageData && totalElements === 0 && !debouncedQuery && priceFilter === "ALL" && !difficulty && (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-32 text-center">
             <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted/30">
               <BookOpen className="h-7 w-7 text-muted-foreground/40" />

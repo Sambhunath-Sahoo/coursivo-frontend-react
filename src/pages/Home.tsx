@@ -157,8 +157,8 @@ export default function Home() {
     const controller = new AbortController();
     const fetchCourses = async () => {
       try {
-        const data = await courseService.getPublicCourses(controller.signal);
-        setCourses(data);
+        const data = await courseService.searchCourses({ size: 10 }, controller.signal);
+        setCourses(data.content);
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to load courses");
@@ -169,6 +169,7 @@ export default function Home() {
     fetchCourses();
     return () => controller.abort();
   }, []);
+
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground antialiased">

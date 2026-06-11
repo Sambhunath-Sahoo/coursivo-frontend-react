@@ -22,10 +22,26 @@ import {
   Lock,
   Eye,
   Users,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Converts any YouTube watch/short URL to an embed URL, or returns the original URL. */
+function getYouTubeEmbedUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    // https://www.youtube.com/watch?v=ID
+    const v = u.searchParams.get("v");
+    if (v) return `https://www.youtube.com/embed/${v}?autoplay=1&rel=0`;
+    // https://youtu.be/ID
+    if (u.hostname === "youtu.be") return `https://www.youtube.com/embed${u.pathname}?autoplay=1&rel=0`;
+    // https://www.youtube.com/embed/ID — already embed
+    if (u.pathname.startsWith("/embed/")) return url;
+  } catch { /* not a valid URL */ }
+  return url;
+}
 
 function formatPrice(price: number, currency: string, isFree: boolean): string {
   if (isFree || price === 0) return "Free";
@@ -128,6 +144,7 @@ export default function CourseDetail() {
   const [enrolled, setEnrolled] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
+  const [previewLesson, setPreviewLesson] = useState<{ title: string; videoUrl: string } | null>(null);
 
   const toggleSection = (id: number) => {
     setCollapsedSections((prev) => {
@@ -287,6 +304,43 @@ export default function CourseDetail() {
   return (
     <div className="min-h-screen bg-background font-sans text-foreground antialiased">
 
+      {/* ── Video Preview Modal ── */}
+      {previewLesson && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewLesson(null)}
+          onKeyDown={(e) => e.key === "Escape" && setPreviewLesson(null)}
+          tabIndex={-1}
+        >
+          <div
+            className="relative w-full max-w-4xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setPreviewLesson(null)}
+              className="absolute -top-10 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Title */}
+            <p className="mb-3 text-sm font-medium text-white/70">{previewLesson.title}</p>
+
+            {/* YouTube iframe */}
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-2xl">
+              <iframe
+                src={getYouTubeEmbedUrl(previewLesson.videoUrl)}
+                title={previewLesson.title}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <div className="border-b border-border pt-24 pb-6">
         <div className="mx-auto max-w-7xl container-padding">
@@ -391,118 +445,168 @@ export default function CourseDetail() {
             {/* ── Curriculum ── */}
             {sections.length > 0 && (
               <section>
-                <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                    Course Curriculum
-                  </h2>
-                  <div className="flex items-center gap-4">
-                    <p className="text-sm text-muted-foreground">
+                {/* Header */}
+                <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                      Course Curriculum
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {sections.length} section{sections.length !== 1 ? "s" : ""}&nbsp;·&nbsp;
                       {totalLessons} lesson{totalLessons !== 1 ? "s" : ""}
                       {totalMinutes > 0 &&
                         ` · ${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m total`}
                     </p>
-                    <button
-                      onClick={() => {
-                        if (collapsedSections.size === sections.length) {
-                          setCollapsedSections(new Set());
-                        } else {
-                          setCollapsedSections(new Set(sections.map((s) => s.id)));
-                        }
-                      }}
-                      className="shrink-0 text-sm font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                    >
-                      {collapsedSections.size === sections.length ? "Expand All" : "Collapse All"}
-                    </button>
                   </div>
+                  <button
+                    onClick={() => {
+                      if (collapsedSections.size === sections.length) {
+                        setCollapsedSections(new Set());
+                      } else {
+                        setCollapsedSections(new Set(sections.map((s) => s.id)));
+                      }
+                    }}
+                    className="shrink-0 self-start rounded-full border border-border bg-background px-4 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground sm:self-auto"
+                  >
+                    {collapsedSections.size === sections.length ? "Expand All" : "Collapse All"}
+                  </button>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-border">
-                  {sections.map((section, sIdx) => (
-                    <div
-                      key={section.id}
-                      className={cn(sIdx !== sections.length - 1 && "border-b border-border")}
-                    >
-                      {/* Section header — clickable */}
-                      <button
-                        onClick={() => toggleSection(section.id)}
-                        className="flex w-full items-center gap-3 bg-muted/30 px-5 py-3.5 text-left transition-colors hover:bg-muted/50"
+                {/* Sections */}
+                <div className="space-y-4">
+                  {sections.map((section, sIdx) => {
+                    const isCollapsed = collapsedSections.has(section.id);
+                    const sectionMinutes = section.lessons.reduce(
+                      (sum, l) => sum + (l.durationMinutes ?? 0), 0
+                    );
+                    return (
+                      <div
+                        key={section.id}
+                        className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-shadow hover:shadow-md"
                       >
-                        <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="flex-1 text-sm font-semibold text-foreground">
-                          {section.title}
-                        </span>
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {section.lessons.length}{" "}
-                          {section.lessons.length === 1 ? "lesson" : "lessons"}
-                        </span>
-                        <ChevronDown
-                          className={cn(
-                            "ml-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
-                            collapsedSections.has(section.id) && "-rotate-90",
-                          )}
-                        />
-                      </button>
-
-                      {/* Lessons — hidden when collapsed */}
-                      {!collapsedSections.has(section.id) && section.lessons.map((lesson, lIdx) => (
-                        <div
-                          key={lesson.id}
-                          className={cn(
-                            "flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/20",
-                            lIdx !== section.lessons.length - 1 && "border-b border-border",
-                          )}
+                        {/* Section header */}
+                        <button
+                          onClick={() => toggleSection(section.id)}
+                          className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-muted/20"
                         >
-                          {/* Lesson number */}
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-background text-[11px] font-medium text-muted-foreground">
-                            {lIdx + 1}
+                          {/* Section number badge */}
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-foreground text-xs font-bold text-background">
+                            {sIdx + 1}
                           </span>
 
-                          {/* Type icon */}
-                          <div className="shrink-0 text-muted-foreground/40">
-                            {lesson.videoUrl ? (
-                              <PlayCircle className="h-4 w-4" />
-                            ) : (
-                              <FileText className="h-4 w-4" />
-                            )}
-                          </div>
-
-                          {/* Title & description */}
+                          {/* Title block */}
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-foreground">
-                              {lesson.title}
+                            <p className="text-[15px] font-semibold text-foreground leading-snug">
+                              {section.title}
                             </p>
-                            {lesson.description && (
-                              <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                                {lesson.description}
-                              </p>
-                            )}
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {section.lessons.length}{" "}
+                              {section.lessons.length === 1 ? "lesson" : "lessons"}
+                              {sectionMinutes > 0 && ` · ${sectionMinutes} min`}
+                            </p>
                           </div>
 
-                          {/* Right meta */}
-                          <div className="flex shrink-0 items-center gap-3">
-                            {lesson.isPreviewable ? (
-                              <span className="flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                                <Eye className="h-3 w-3" />
-                                Preview
-                              </span>
-                            ) : (
-                              <Lock className="h-3.5 w-3.5 text-muted-foreground/30" />
+                          {/* Chevron */}
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-200",
+                              isCollapsed && "-rotate-90",
                             )}
-                            {lesson.durationMinutes != null && lesson.durationMinutes > 0 && (
-                              <span className="flex items-center gap-1 text-[12px] text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                {lesson.durationMinutes} min
-                              </span>
-                            )}
+                          />
+                        </button>
+
+                        {/* Lessons list */}
+                        {!isCollapsed && (
+                          <div className="border-t border-border">
+                            {section.lessons.map((lesson, lIdx) => {
+                              const isPreview = lesson.isPreviewable;
+                              const hasVideo = !!lesson.videoUrl;
+                              return (
+                                <div
+                                  key={lesson.id}
+                                  onClick={() => {
+                                    if (isPreview && lesson.videoUrl) {
+                                      setPreviewLesson({ title: lesson.title, videoUrl: lesson.videoUrl });
+                                    }
+                                  }}
+                                  className={cn(
+                                    "group relative flex items-center gap-4 px-5 py-3.5 transition-colors",
+                                    lIdx !== section.lessons.length - 1 && "border-b border-border/60",
+                                    isPreview && lesson.videoUrl
+                                      ? "cursor-pointer hover:bg-teal-50/60 dark:hover:bg-teal-950/20"
+                                      : "hover:bg-muted/20",
+                                  )}
+                                >
+                                  {/* Left accent bar for preview lessons */}
+                                  {isPreview && (
+                                    <div className="absolute left-0 top-0 h-full w-0.5 rounded-r bg-teal-500" />
+                                  )}
+
+                                  {/* Lesson index */}
+                                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-muted/50 text-[11px] font-semibold text-muted-foreground">
+                                    {lIdx + 1}
+                                  </span>
+
+                                  {/* Media type icon — play button animates on hover for preview */}
+                                  <div className={cn(
+                                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
+                                    isPreview && hasVideo
+                                      ? "bg-teal-500/10 text-teal-600 group-hover:bg-teal-500 group-hover:text-white"
+                                      : hasVideo ? "bg-foreground/5 text-foreground/60" : "bg-muted text-muted-foreground/50"
+                                  )}>
+                                    {hasVideo ? (
+                                      <PlayCircle className="h-3.5 w-3.5" />
+                                    ) : (
+                                      <FileText className="h-3.5 w-3.5" />
+                                    )}
+                                  </div>
+
+                                  {/* Title & description */}
+                                  <div className="min-w-0 flex-1">
+                                    <p className={cn(
+                                      "truncate text-[13.5px] font-medium leading-snug",
+                                      isPreview ? "text-foreground" : "text-foreground/80"
+                                    )}>
+                                      {lesson.title}
+                                    </p>
+                                    {lesson.description && (
+                                      <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
+                                        {lesson.description}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Right meta */}
+                                  <div className="flex shrink-0 items-center gap-2">
+                                    {isPreview ? (
+                                      <span className="flex items-center gap-1 rounded-full bg-teal-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-teal-600 ring-1 ring-teal-500/20">
+                                        <Eye className="h-3 w-3" />
+                                        Preview
+                                      </span>
+                                    ) : (
+                                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/60">
+                                        <Lock className="h-3 w-3 text-muted-foreground/40" />
+                                      </span>
+                                    )}
+                                    {lesson.durationMinutes != null && lesson.durationMinutes > 0 && (
+                                      <span className="flex items-center gap-1 text-[11.5px] tabular-nums text-muted-foreground">
+                                        <Clock className="h-3 w-3" />
+                                        {lesson.durationMinutes} min
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
+
 
           </div>
 
