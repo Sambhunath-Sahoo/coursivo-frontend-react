@@ -1,3 +1,12 @@
+/**
+ * Auth state, hydrated from the JWT in localStorage rather than from a server session.
+ *
+ * Constraint: there is no refresh flow. The token is decoded client-side and checked for
+ * expiry only in getInitialState(), which runs once when the store is created — so an
+ * expired token logs the user out on the next page load, not at the moment it expires. A
+ * long-lived tab keeps rendering as authenticated while the backend rejects its requests.
+ * Adding refresh means changing this hydration and backend token issuance together.
+ */
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { storage, STORAGE_KEYS } from "@/lib/storage";
 import { decodeToken } from "@/lib/jwt";

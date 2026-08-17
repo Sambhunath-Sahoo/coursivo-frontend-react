@@ -1,3 +1,12 @@
+/**
+ * Blocks the whole app from rendering until GET /api/health succeeds.
+ *
+ * Constraint: production runs on infrastructure that sleeps when idle, so the first
+ * request after a cold start can take tens of seconds. This polls every 2s and renders
+ * children only after a success, which means an unreachable backend leaves this screen up
+ * indefinitely rather than showing a broken app. When the frontend looks blank or stuck,
+ * check that the backend is running before debugging anything here.
+ */
 import { useEffect, useRef, useState } from "react";
 import { healthService } from "@/api/health.service";
 import { Loader2, Server, Coffee } from "lucide-react";

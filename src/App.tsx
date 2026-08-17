@@ -45,7 +45,14 @@ function PageLoader() {
   );
 }
 
-// Layout wrapper that conditionally shows Navbar
+/**
+ * Chooses the page chrome by inspecting the pathname.
+ *
+ * Constraint: /instructor/* and the student dashboard routes render their own sidebar via
+ * InstructorLayout / StudentLayout, so the Navbar has to be suppressed for them here.
+ * These prefix checks are not derived from the route tree — adding a route under one of
+ * those prefixes without updating them produces two navigation bars.
+ */
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 

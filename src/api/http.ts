@@ -1,3 +1,17 @@
+/**
+ * The single place the ApiResponse envelope is unwrapped.
+ *
+ * Constraint: every backend response is { metaData: { success, message }, data }. This
+ * module throws HttpError when the HTTP status is not ok OR metaData.success is false,
+ * and returns json.data on success — so nothing downstream ever sees the envelope, and
+ * the service functions in api/*.service.ts return payloads directly. A backend endpoint
+ * that returns a raw object instead of ApiResponse.ok(...) breaks every caller even on
+ * HTTP 200.
+ *
+ * The Bearer token is attached here from localStorage; do not set Authorization inside
+ * services. API_URL must keep its trailing slash, because callers pass bare relative
+ * paths like api.get("courses").
+ */
 import type { ApiResponse } from "@/types/auth.types";
 import { storage, STORAGE_KEYS } from "@/lib/storage";
 
