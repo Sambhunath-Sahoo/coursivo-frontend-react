@@ -184,7 +184,7 @@ export function SectionItem({
               </button>
               <button
                 onClick={() => onDelete(section.id)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground/80 hover:bg-red-50 hover:text-red-500"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground/80 hover:bg-destructive/10 hover:text-destructive"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>

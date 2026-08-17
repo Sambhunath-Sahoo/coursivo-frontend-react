@@ -255,7 +255,7 @@ export default function CourseDetail() {
           <span
             className={cn(
               "text-3xl font-semibold tracking-tight",
-              isFreeCard ? "text-emerald-600" : "text-foreground",
+              "text-foreground",
             )}
           >
             {priceLabel}
@@ -270,8 +270,8 @@ export default function CourseDetail() {
           className={cn(
             "mb-3 h-11 w-full rounded-full text-sm font-semibold shadow-none",
             enrolled
-              ? "bg-emerald-600 text-white hover:bg-emerald-700"
-              : "bg-foreground text-background hover:opacity-80",
+              ? "border border-border bg-accent text-foreground hover:bg-accent"
+              : "bg-primary text-primary-foreground hover:opacity-90",
           )}
           onClick={enrolled ? undefined : handleEnroll}
           disabled={isEnrolling}
@@ -533,13 +533,13 @@ export default function CourseDetail() {
                                     "group relative flex items-center gap-4 px-5 py-3.5 transition-colors",
                                     lIdx !== section.lessons.length - 1 && "border-b border-border/60",
                                     isPreview && lesson.videoUrl
-                                      ? "cursor-pointer hover:bg-teal-50/60 dark:hover:bg-teal-950/20"
+                                      ? "cursor-pointer hover:bg-accent"
                                       : "hover:bg-muted/20",
                                   )}
                                 >
                                   {/* Left accent bar for preview lessons */}
                                   {isPreview && (
-                                    <div className="absolute left-0 top-0 h-full w-0.5 rounded-r bg-teal-500" />
+                                    <div className="absolute left-0 top-0 h-full w-0.5 rounded-r bg-foreground/70" />
                                   )}
 
                                   {/* Lesson index */}
@@ -551,7 +551,7 @@ export default function CourseDetail() {
                                   <div className={cn(
                                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
                                     isPreview && hasVideo
-                                      ? "bg-teal-500/10 text-teal-600 group-hover:bg-teal-500 group-hover:text-white"
+                                      ? "bg-foreground/10 text-foreground group-hover:bg-foreground group-hover:text-background"
                                       : hasVideo ? "bg-foreground/5 text-foreground/60" : "bg-muted text-muted-foreground/50"
                                   )}>
                                     {hasVideo ? (
@@ -579,7 +579,7 @@ export default function CourseDetail() {
                                   {/* Right meta */}
                                   <div className="flex shrink-0 items-center gap-2">
                                     {isPreview ? (
-                                      <span className="flex items-center gap-1 rounded-full bg-teal-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-teal-600 ring-1 ring-teal-500/20">
+                                      <span className="flex items-center gap-1 rounded-full border border-border bg-accent px-2.5 py-0.5 text-[11px] font-semibold text-foreground">
                                         <Eye className="h-3 w-3" />
                                         Preview
                                       </span>

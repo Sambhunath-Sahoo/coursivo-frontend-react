@@ -257,8 +257,8 @@ export default function MyCourses() {
 
         {/* ── Error ──────────────────────────────────────────────────── */}
         {error && (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 py-16 text-center">
-            <p className="font-semibold text-red-600">{error}</p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/30 bg-destructive/10 py-16 text-center">
+            <p className="font-semibold text-destructive">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="mt-4 rounded-full bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm border border-border hover:bg-muted/30"

@@ -16,6 +16,7 @@ import {
   Shield,
   Check,
   ChevronRight,
+  ArrowRight,
   Globe,
 } from "lucide-react";
 
@@ -62,6 +63,22 @@ const FEATURES = [
     title: "And much more",
     desc: "Even more things to offer which you are just going to love.",
   },
+];
+
+/**
+ * Column spans per feature on the 12-column bento. Each triplet sums to 12 so rows stay
+ * flush while the panel widths vary — the asymmetry is the point, so keep the sums intact
+ * when adding or removing a feature.
+ */
+const FEATURE_SPANS = [
+  "lg:col-span-5",
+  "lg:col-span-4",
+  "lg:col-span-3",
+  "lg:col-span-3",
+  "lg:col-span-4",
+  "lg:col-span-5",
+  "lg:col-span-6",
+  "lg:col-span-6",
 ];
 
 type PricingPlan = {
@@ -128,24 +145,46 @@ const FREE_FEATURES = [
 ];
 
 const FOOTER_LINKS: Record<string, { label: string; href: string }[]> = {
-  "": [
+  Product: [
     { label: "Pricing", href: "/" },
     { label: "Blog", href: "/" },
     { label: "Contact", href: "/" },
   ],
-  " ": [
+  Legal: [
     { label: "Privacy Policy", href: "/" },
     { label: "Terms of Service", href: "/" },
     { label: "Refund Policy", href: "/" },
   ],
-  "  ": [
+  Social: [
     { label: "Twitter", href: "/" },
     { label: "LinkedIn", href: "/" },
     { label: "GitHub", href: "/" },
   ],
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Section heading ─────────────────────────────────────────────────────────
+
+function SectionHeading({
+  label,
+  title,
+  desc,
+  align = "left",
+}: {
+  label: string;
+  title: string;
+  desc?: string;
+  align?: "left" | "center";
+}) {
+  return (
+    <div className={align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
+      <p className="eyebrow">{label}</p>
+      <h2 className="text-h1 mt-3 text-foreground">{title}</h2>
+      {desc && <p className="text-body mt-4 text-muted-foreground">{desc}</p>}
+    </div>
+  );
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -170,291 +209,344 @@ export default function Home() {
     return () => controller.abort();
   }, []);
 
-
   return (
     <div className="min-h-screen bg-background font-sans text-foreground antialiased">
+      {/* ─── 1. Hero ─────────────────────────────────────────────────────── */}
+      <section className="relative isolate overflow-hidden pb-24 pt-20 md:pt-28">
+        {/* Atmosphere: engineering grid under a soft monochrome bloom */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 glow-top" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-grid mask-fade-radial opacity-60"
+        />
 
-      {/* ─── 1. Hero ───────────────────────────────────────────────────────── */}
-      <section className="flex flex-col items-center container-padding pb-0 pt-24 text-center">
-        <h1 className="mx-auto max-w-4xl text-[52px] font-semibold leading-[1.05] tracking-tight text-foreground sm:text-[68px] md:text-[84px]">
-          The easiest way to create, sell, and grow your courses
-        </h1>
-
-        <div className="mt-10">
-          <Link to="/signup">
-            <Button className="h-11 rounded-full bg-foreground px-8 text-sm font-semibold text-background hover:opacity-80">
-              Book Demo
-            </Button>
-          </Link>
-        </div>
-
-        {/* Product Screenshot */}
-        <div className="relative mx-auto mt-14 w-full max-w-6xl">
-          <div className="rounded-3xl border border-border/60 bg-zinc-100/80 p-2 shadow-2xl dark:bg-zinc-900/50 sm:p-4 md:p-5">
-            <div className="overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm">
-              <img 
-                src={homePageImg} 
-                alt="Coursivo Course Builder Dashboard" 
-                className="w-full h-auto object-cover"
-              />
+        <div className="container-padding mx-auto max-w-7xl">
+          {/* Left-weighted headline block — deliberately not centered */}
+          <div className="max-w-3xl animate-rise">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground/60" />
+              <span className="text-[12px] font-medium text-muted-foreground">
+                A course platform for independent educators
+              </span>
             </div>
-          </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background via-background/80 to-transparent" />
-        </div>
-      </section>
 
-      {/* ─── 2. Features ───────────────────────────────────────────────────── */}
-      <section className="container-padding py-24">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-14 text-center">
-            <h2 className="mb-4 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-              Packed with thousands of features
-            </h2>
-            <p className="mx-auto max-w-2xl text-base text-muted-foreground">
-              From course creation to student management, Coursivo offers everything you need
-              to launch, scale, and monetize your courses.
-            </p>
-          </div>
+            <h1 className="text-display mt-7 text-foreground">
+              The easiest way to create, sell, and grow your courses
+            </h1>
 
-          <div className="grid grid-cols-1 gap-px bg-border border border-border sm:grid-cols-2 md:grid-cols-4">
-            {FEATURES.map(({ icon: Icon, label, title, desc }: {
-              icon?: React.ElementType;
-              label?: string;
-              title: string;
-              desc: string;
-            }) => (
-              <div key={title} className="bg-background p-7 transition-colors hover:bg-muted/20">
-                <div className="mb-3 flex h-7 w-7 items-center justify-center">
-                  {label ? (
-                    <span className="text-sm font-semibold text-muted-foreground">{label}</span>
-                  ) : Icon ? (
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                  ) : null}
-                </div>
-                <h3 className="mb-2 text-sm font-semibold text-foreground">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 3. Pricing ────────────────────────────────────────────────────── */}
-      <section className="container-padding py-24">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-12 text-center">
-            <h2 className="mb-3 text-5xl font-semibold tracking-tight text-foreground md:text-6xl">
-              Pricing
-            </h2>
-            <p className="text-base text-muted-foreground">
-              Choose the plan that suits your needs. No hidden fees. Cancel at any time.
+            <p className="text-body mt-6 max-w-xl text-muted-foreground">
+              Build your curriculum, publish to a global marketplace, and get paid — without
+              stitching together five different tools.
             </p>
 
-            <div className="mt-6 inline-flex items-center rounded-full border border-border bg-muted/30 p-1">
-              <button
-                onClick={() => setBilling("monthly")}
-                className={`rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${
-                  billing === "monthly"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBilling("annually")}
-                className={`rounded-full px-5 py-1.5 text-sm font-semibold transition-colors ${
-                  billing === "annually"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Annually
-              </button>
-            </div>
-          </div>
-
-          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-            {PRICING_PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative flex flex-col rounded-xl border p-7 ${
-                  plan.popular
-                    ? "border-foreground bg-background shadow-sm"
-                    : "border-border bg-background"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 right-6 rounded-full bg-foreground px-3 py-0.5 text-[11px] font-semibold text-background">
-                    Popular
-                  </div>
-                )}
-                <div className="mb-1 text-lg font-semibold text-foreground">{plan.name}</div>
-                <p className="mb-6 text-sm text-muted-foreground">{plan.desc}</p>
-                <div className="mb-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold text-foreground">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.period}</span>
-                </div>
-                <ul className="mb-8 flex-1 space-y-3">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                      <Check className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/signup">
-                  <Button
-                    className={`w-full rounded-md font-semibold ${
-                      plan.popular
-                        ? "bg-foreground text-background hover:opacity-80"
-                        : "border border-border bg-background text-foreground hover:bg-muted/30"
-                    }`}
-                    variant={plan.popular ? "default" : "outline"}
-                  >
-                    Get Started
-                  </Button>
-                </Link>
-                {plan.exploreMore && (
-                  <Link to="/courses" className="mt-3 flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-                    Explore more <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Free tier */}
-          <div className="rounded-xl border border-border bg-background p-8 md:flex md:items-center md:justify-between md:gap-12">
-            <div className="mb-6 md:mb-0 md:flex-1">
-              <h3 className="mb-1 text-2xl font-semibold text-foreground">Free</h3>
-              <p className="text-sm text-muted-foreground">Get all goodies for free, no credit card required.</p>
-              <p className="mt-4 mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Included features</p>
-              <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
-                {FREE_FEATURES.map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-foreground">
-                      <Check className="h-2.5 w-2.5 text-background" />
-                    </div>
-                    {f}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col items-center md:items-end">
-              <div className="mb-4 flex items-baseline gap-1">
-                <span className="text-5xl font-semibold text-foreground">$0</span>
-                <span className="text-sm text-muted-foreground">/mon</span>
-              </div>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link to="/signup">
-                <Button className="w-40 rounded-md bg-foreground font-semibold text-background hover:opacity-80">
+                <Button className="h-11 rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90">
+                  Get started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/courses">
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-lg border-border bg-card px-6 text-sm font-semibold text-foreground hover:bg-accent"
+                >
+                  Browse courses
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Product panel — offset right and bled past the container edge */}
+          <div className="relative mt-16 lg:mt-20 lg:-mr-24 xl:-mr-32">
+            <div className="panel panel-highlight overflow-hidden p-1.5 shadow-2xl sm:p-2">
+              <div className="well overflow-hidden">
+                <img
+                  src={homePageImg}
+                  alt="The Coursivo course builder, showing a curriculum outline with sections and lessons"
+                  className="h-auto w-full object-cover"
+                  loading="eager"
+                />
+              </div>
+            </div>
+            {/* Dissolve the panel's lower edge into the field */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 2. Features ─────────────────────────────────────────────────── */}
+      <section className="container-padding mx-auto max-w-7xl py-24">
+        <SectionHeading
+          label="Capabilities"
+          title="Packed with thousands of features"
+          desc="From course creation to student management, Coursivo offers everything you need to launch, scale, and monetize your courses."
+        />
+
+        <div className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
+          {FEATURES.map(({ icon: Icon, title, desc }, i) => (
+            <article
+              key={title}
+              className={`panel-interactive group flex flex-col p-6 ${FEATURE_SPANS[i]}`}
+            >
+              <div className="well mb-4 flex h-9 w-9 items-center justify-center">
+                <Icon
+                  className="h-[17px] w-[17px] text-muted-foreground transition-colors group-hover:text-foreground"
+                  strokeWidth={1.75}
+                />
+              </div>
+              <h3 className="text-[15px] font-semibold tracking-tight text-foreground">
+                {title}
+              </h3>
+              <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">{desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── 3. Pricing ──────────────────────────────────────────────────── */}
+      <section className="container-padding mx-auto max-w-7xl py-24">
+        <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+          <SectionHeading
+            label="Pricing"
+            title="Choose the plan that suits your needs"
+            desc="No hidden fees. Cancel at any time."
+          />
+
+          <div className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-card p-1">
+            {(["monthly", "annually"] as const).map((cycle) => (
+              <button
+                key={cycle}
+                onClick={() => setBilling(cycle)}
+                aria-pressed={billing === cycle}
+                className={`rounded-full px-5 py-1.5 text-[13px] font-semibold capitalize transition-colors ${
+                  billing === cycle
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {cycle}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-3 md:grid-cols-3">
+          {PRICING_PLANS.map((plan) => (
+            <div
+              key={plan.name}
+              className={`relative flex flex-col rounded-xl border p-7 transition-colors ${
+                plan.popular
+                  ? "panel-highlight border-foreground/25 bg-accent"
+                  : "border-border bg-card hover:border-foreground/20"
+              }`}
+            >
+              {plan.popular && (
+                <span className="absolute -top-2.5 right-6 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+                  Popular
+                </span>
+              )}
+
+              <h3 className="text-[15px] font-semibold text-foreground">{plan.name}</h3>
+              <p className="mt-1.5 text-[13px] text-muted-foreground">{plan.desc}</p>
+
+              <div className="mt-7 flex items-baseline gap-1.5">
+                <span className="text-4xl font-semibold tracking-tight text-foreground">
+                  {plan.price}
+                </span>
+                <span className="text-[13px] text-muted-foreground">{plan.period}</span>
+              </div>
+
+              <div className="my-7 h-px bg-border" />
+
+              <ul className="mb-8 flex-1 space-y-3">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-[13.5px] text-muted-foreground">
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground/70" strokeWidth={2.5} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Link to="/signup" className="block">
+                <Button
+                  variant={plan.popular ? "default" : "outline"}
+                  className={`w-full rounded-lg font-semibold ${
+                    plan.popular
+                      ? "bg-primary text-primary-foreground hover:opacity-90"
+                      : "border-border bg-background text-foreground hover:bg-accent"
+                  }`}
+                >
                   Get Started
                 </Button>
               </Link>
-              <p className="mt-2 text-center text-xs text-muted-foreground">No credit card required.</p>
+
+              {plan.exploreMore && (
+                <Link
+                  to="/courses"
+                  className="mt-3 flex items-center justify-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Explore more <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
             </div>
+          ))}
+        </div>
+
+        {/* Free tier — full-width panel closing the pricing block */}
+        <div className="panel mt-3 p-8 md:flex md:items-center md:justify-between md:gap-12">
+          <div className="mb-8 md:mb-0 md:flex-1">
+            <h3 className="text-h3 text-foreground">Free</h3>
+            <p className="mt-1.5 text-[13.5px] text-muted-foreground">
+              Get all goodies for free, no credit card required.
+            </p>
+
+            <p className="eyebrow mt-6">Included features</p>
+            <div className="mt-3 grid grid-cols-1 gap-x-8 gap-y-2.5 sm:grid-cols-2">
+              {FREE_FEATURES.map((f) => (
+                <div key={f} className="flex items-center gap-2.5 text-[13.5px] text-muted-foreground">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-foreground">
+                    <Check className="h-2.5 w-2.5 text-background" strokeWidth={3} />
+                  </span>
+                  {f}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start md:items-end">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-5xl font-semibold tracking-tight text-foreground">$0</span>
+              <span className="text-[13px] text-muted-foreground">/mon</span>
+            </div>
+            <Link to="/signup" className="mt-5 w-full md:w-auto">
+              <Button className="w-full rounded-lg bg-primary font-semibold text-primary-foreground hover:opacity-90 md:w-44">
+                Get Started
+              </Button>
+            </Link>
+            <p className="mt-2.5 text-[12px] text-muted-foreground">No credit card required.</p>
           </div>
         </div>
       </section>
 
-      {/* ─── 4. Featured Courses ─────────────────────────────────────────── */}
-      {!isLoading && !error && courses.length > 0 && (
-        <section className="border-t border-border bg-background container-padding py-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-              <div>
-                <h2 className="text-4xl font-semibold tracking-tight text-foreground">Top courses right now</h2>
-                <p className="mt-2 text-base text-muted-foreground">The most popular choices from learners worldwide.</p>
-              </div>
-              <Link to="/courses" className="hidden md:block">
-                <Button variant="outline" className="rounded-full border-border font-semibold text-foreground">
-                  View all <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-              {courses.slice(0, 10).map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
+      {/* ─── 4. Featured courses ─────────────────────────────────────────── */}
+      {(isLoading || (!error && courses.length > 0)) && (
+        <section className="container-padding mx-auto max-w-7xl py-24">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <SectionHeading
+              label="Marketplace"
+              title="Top courses right now"
+              desc="The most popular choices from learners worldwide."
+            />
+            <Link to="/courses" className="hidden shrink-0 md:block">
+              <Button
+                variant="outline"
+                className="rounded-lg border-border bg-card font-semibold text-foreground hover:bg-accent"
+                disabled={isLoading}
+              >
+                View all <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
-        </section>
-      )}
 
-      {isLoading && (
-        <section className="border-t border-border bg-background container-padding py-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-              <div>
-                <h2 className="text-4xl font-semibold tracking-tight text-foreground">Top courses right now</h2>
-                <p className="mt-2 text-base text-muted-foreground">The most popular choices from learners worldwide.</p>
-              </div>
-              <div className="hidden md:block">
-                <Button variant="outline" className="rounded-full border-border font-semibold text-foreground" disabled>
-                  View all <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-              {[...Array(10)].map((_, i) => (
-                <CourseCardSkeleton key={i} />
-              ))}
-            </div>
+          <div className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+            {isLoading
+              ? [...Array(10)].map((_, i) => <CourseCardSkeleton key={i} />)
+              : courses.slice(0, 10).map((course) => (
+                  <CourseCard key={course.id} course={course} />
+                ))}
           </div>
         </section>
       )}
 
       {error && (
-        <div className="flex flex-col items-center border-t border-border py-16 text-center">
-          <Shield className="mb-3 h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-3 rounded-full">
-            Try Again
-          </Button>
-        </div>
+        <section className="container-padding mx-auto max-w-7xl py-24">
+          <div className="panel flex flex-col items-center px-6 py-16 text-center">
+            <Shield className="mb-4 h-7 w-7 text-muted-foreground" strokeWidth={1.5} />
+            <p className="text-[13.5px] text-muted-foreground">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+              className="mt-5 rounded-lg border-border bg-background hover:bg-accent"
+            >
+              Try again
+            </Button>
+          </div>
+        </section>
       )}
 
-      {/* ─── 5. Dark CTA ───────────────────────────────────────────────────── */}
-      <section className="border-t border-border bg-background container-padding py-20 text-center">
-        <div className="mx-auto max-w-2xl">
-          <h2 className="mb-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-            Ready to signup and join the waitlist?
-          </h2>
-          <p className="mb-10 text-sm text-muted-foreground">
-            Get instant access to our state of the art project and join the waitlist to get early access to all the features.
-          </p>
-          <Link to="/signup">
-            <Button className="h-11 rounded-full bg-foreground px-8 text-sm font-semibold text-background hover:opacity-80">
-              Book Demo
-            </Button>
-          </Link>
+      {/* ─── 5. CTA ──────────────────────────────────────────────────────── */}
+      <section className="container-padding mx-auto max-w-7xl pb-24">
+        <div className="panel panel-highlight relative isolate overflow-hidden px-6 py-20 text-center sm:px-12">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 bg-grid-sm mask-fade-radial opacity-50"
+          />
+          <div className="mx-auto max-w-2xl">
+            <h2 className="text-h1 text-foreground">Ready to sign up and join the waitlist?</h2>
+            <p className="text-body mt-4 text-muted-foreground">
+              Get instant access to our state of the art project and join the waitlist to get
+              early access to all the features.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/signup">
+                <Button className="h-11 rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                  Book demo
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/courses">
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-lg border-border bg-background px-6 text-sm font-semibold text-foreground hover:bg-accent"
+                >
+                  Explore the marketplace
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ─── 6. Footer ─────────────────────────────────────────────────────── */}
-      <footer className="border-t border-border bg-background container-padding py-12">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+      {/* ─── 6. Footer ───────────────────────────────────────────────────── */}
+      <footer className="border-t border-border">
+        <div className="container-padding mx-auto max-w-7xl py-14">
+          <div className="flex flex-col gap-12 md:flex-row md:items-start md:justify-between">
             <div className="shrink-0">
-              <div className="mb-2 flex items-center gap-1.5">
-                <div className="h-4 w-4 rounded-sm bg-foreground" />
-                <span className="text-sm font-normal text-foreground">Coursivo</span>
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-4 rounded-[5px] bg-foreground" />
+                <span className="text-sm font-semibold tracking-tight text-foreground">
+                  Coursivo
+                </span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Copyright © 2026 Coursivo Technologies Pvt. Ltd.<br />All rights reserved.
+              <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
+                Copyright © 2026 Coursivo Technologies Pvt. Ltd.
+                <br />
+                All rights reserved.
               </p>
             </div>
-            <div className="flex gap-16">
-              {Object.entries(FOOTER_LINKS).map(([, links], i) => (
-                <ul key={i} className="space-y-3">
-                  {links.map(({ label, href }) => (
-                    <li key={label}>
-                      <Link to={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                        {label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+
+            <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 sm:gap-16">
+              {Object.entries(FOOTER_LINKS).map(([group, links]) => (
+                <div key={group}>
+                  <p className="eyebrow">{group}</p>
+                  <ul className="mt-4 space-y-3">
+                    {links.map(({ label, href }) => (
+                      <li key={label}>
+                        <Link
+                          to={href}
+                          className="text-[13.5px] text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
             </div>
           </div>

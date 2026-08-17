@@ -50,23 +50,26 @@ function NavItem({
         to={item.href}
         title={isCollapsed ? item.name : undefined}
         className={cn(
-          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+          "group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150",
           isCollapsed && "justify-center px-0",
           isActive
-            ? "bg-foreground text-background"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            ? "border border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground"
+            : "border border-transparent text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
         )}
       >
         <item.icon
+          strokeWidth={1.75}
           className={cn(
             "shrink-0 transition-colors",
             isCollapsed ? "h-[18px] w-[18px]" : "h-[15px] w-[15px]",
-            isActive ? "text-background" : "text-muted-foreground/70 group-hover:text-foreground",
+            isActive
+              ? "text-sidebar-accent-foreground"
+              : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground",
           )}
         />
         {!isCollapsed && <span className="truncate">{item.name}</span>}
         {!isCollapsed && isActive && (
-          <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-background/50" />
+          <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
       </Link>
     </li>
@@ -101,7 +104,7 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col border-r border-border bg-background transition-[width] duration-300 ease-in-out",
+        "flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-in-out",
         isCollapsed ? "w-16" : "w-[220px]",
       )}
       style={{ willChange: "width" }}
@@ -138,7 +141,7 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
         {/* Main Items */}
         {!isCollapsed && config.mainNavItems.title && (
-          <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+          <p className="eyebrow mb-2 px-3">
             {config.mainNavItems.title}
           </p>
         )}
@@ -157,7 +160,7 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
         {config.contentSection && (
           <div className="mt-6">
             {!isCollapsed && config.contentSection.title && (
-              <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+              <p className="eyebrow mb-2 px-3">
                 {config.contentSection.title}
               </p>
             )}
@@ -202,7 +205,7 @@ export function Sidebar({ config, isCollapsed, onToggle }: SidebarProps) {
               <LogOut className="h-4 w-4" />
             </button>
           ) : (
-            <div className="flex items-center gap-2.5 rounded-lg border border-border/50 bg-muted/30 px-3 py-2">
+            <div className="flex items-center gap-2.5 rounded-lg border border-sidebar-border bg-sidebar-accent px-3 py-2">
               {/* Avatar */}
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground">
                 {user?.image ? (

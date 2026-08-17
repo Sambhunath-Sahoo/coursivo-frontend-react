@@ -119,9 +119,9 @@ export function Navbar() {
                 <DropdownMenuSeparator className="m-0 bg-border" />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="rounded-none rounded-b-xl cursor-pointer px-3.5 py-2.5 text-[13px] font-medium text-red-600 focus:bg-red-50 focus:text-red-600 data-[highlighted]:bg-red-50 data-[highlighted]:text-red-600 [&_svg]:size-[16px] gap-2.5"
+                  className="rounded-none rounded-b-xl cursor-pointer px-3.5 py-2.5 text-[13px] font-medium text-destructive focus:bg-destructive/10 focus:text-destructive data-[highlighted]:bg-red-50 data-[highlighted]:text-red-600 [&_svg]:size-[16px] gap-2.5"
                 >
-                  <LogOut className="text-red-600" />
+                  <LogOut className="text-destructive" />
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>

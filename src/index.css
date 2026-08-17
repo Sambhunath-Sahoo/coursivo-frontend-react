@@ -2,109 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Coursivo theme tokens — "Console".
+ *
+ * Constraint: the ramp is deliberately neutral (chroma 0). Hierarchy comes from surface
+ * elevation, not hue — `--background` is a recessed field and `--card` is the raised panel
+ * that content sits on, in both modes. Introducing a saturated accent or setting `--card`
+ * equal to `--background` collapses that depth cue and the whole UI reads flat.
+ */
+
 @layer base {
   :root {
-    --background: oklch(1.0000 0 0);
-    --foreground: oklch(0.1884 0.0128 248.5103);
-    --card: oklch(0.9784 0.0011 197.1387);
-    --card-foreground: oklch(0.1884 0.0128 248.5103);
+    /* Surfaces — light: soft recessed field, pure white panels */
+    --background: oklch(0.9800 0 0);
+    --foreground: oklch(0.1800 0 0);
+    --card: oklch(1.0000 0 0);
+    --card-foreground: oklch(0.1800 0 0);
     --popover: oklch(1.0000 0 0);
-    --popover-foreground: oklch(0.1884 0.0128 248.5103);
-    --primary: oklch(0.1884 0.0128 248.5103);
+    --popover-foreground: oklch(0.1800 0 0);
+
+    --primary: oklch(0.1800 0 0);
     --primary-foreground: oklch(1.0000 0 0);
-    --secondary: oklch(0.1884 0.0128 248.5103);
-    --secondary-foreground: oklch(1.0000 0 0);
-    --muted: oklch(0.9222 0.0013 286.3737);
-    --muted-foreground: oklch(0.1884 0.0128 248.5103);
-    --accent: oklch(0.9392 0.0166 250.8453);
-    --accent-foreground: oklch(0.1884 0.0128 248.5103);
-    --destructive: oklch(0.6188 0.2376 25.7658);
+    --secondary: oklch(0.9550 0 0);
+    --secondary-foreground: oklch(0.1800 0 0);
+
+    --muted: oklch(0.9550 0 0);
+    --muted-foreground: oklch(0.5200 0 0);
+    --accent: oklch(0.9450 0 0);
+    --accent-foreground: oklch(0.1800 0 0);
+
+    --destructive: oklch(0.5600 0.1900 25.0000);
     --destructive-foreground: oklch(1.0000 0 0);
-    --border: oklch(0.9317 0.0118 231.6594);
-    --input: oklch(0.9809 0.0025 228.7836);
-    --ring: oklch(0.1884 0.0128 248.5103);
-    --chart-1: oklch(0.1884 0.0128 248.5103);
-    --chart-2: oklch(0.6907 0.1554 160.3454);
-    --chart-3: oklch(0.8214 0.1600 82.5337);
-    --chart-4: oklch(0.7064 0.1822 151.7125);
-    --chart-5: oklch(0.5919 0.2186 10.5826);
-    --sidebar: oklch(0.9784 0.0011 197.1387);
-    --sidebar-foreground: oklch(0.1884 0.0128 248.5103);
-    --sidebar-primary: oklch(0.1884 0.0128 248.5103);
+
+    --border: oklch(0.9100 0 0);
+    --input: oklch(0.9300 0 0);
+    --ring: oklch(0.1800 0 0);
+
+    /* Charts — monochrome ramp, lightness-stepped */
+    --chart-1: oklch(0.2200 0 0);
+    --chart-2: oklch(0.3800 0 0);
+    --chart-3: oklch(0.5400 0 0);
+    --chart-4: oklch(0.6800 0 0);
+    --chart-5: oklch(0.8200 0 0);
+
+    /* Sidebar shares the recessed field; the active pill is a raised surface */
+    --sidebar: oklch(0.9800 0 0);
+    --sidebar-foreground: oklch(0.4400 0 0);
+    --sidebar-primary: oklch(0.1800 0 0);
     --sidebar-primary-foreground: oklch(1.0000 0 0);
-    --sidebar-accent: oklch(0.9392 0.0166 250.8453);
-    --sidebar-accent-foreground: oklch(0.1884 0.0128 248.5103);
-    --sidebar-border: oklch(0.9271 0.0101 238.5177);
-    --sidebar-ring: oklch(0.1884 0.0128 248.5103);
+    --sidebar-accent: oklch(0.9350 0 0);
+    --sidebar-accent-foreground: oklch(0.1800 0 0);
+    --sidebar-border: oklch(0.9100 0 0);
+    --sidebar-ring: oklch(0.1800 0 0);
 
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-serif: Georgia, serif;
     --font-mono: "SF Mono", Menlo, monospace;
 
-    --radius: 0.5rem;
-
+    --radius: 0.75rem;
     --tracking-normal: -0.011em;
 
-    --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+    /* Elevation reads through surface + hairline border; shadows only lift overlays */
+    --shadow-2xs: 0 1px 1px 0 oklch(0 0 0 / 0.03);
+    --shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.04);
+    --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 oklch(0 0 0 / 0.06);
+    --shadow-md: 0 2px 8px -2px oklch(0 0 0 / 0.08);
+    --shadow-lg: 0 8px 24px -6px oklch(0 0 0 / 0.10);
+    --shadow-xl: 0 16px 40px -12px oklch(0 0 0 / 0.14);
+    --shadow-2xl: 0 28px 64px -20px oklch(0 0 0 / 0.20);
   }
 
   .dark {
-    --background: oklch(0 0 0);
-    --foreground: oklch(0.9328 0.0025 228.7857);
-    --card: oklch(0.2097 0.0080 274.5332);
-    --card-foreground: oklch(0.8853 0 0);
-    --popover: oklch(0 0 0);
-    --popover-foreground: oklch(0.9328 0.0025 228.7857);
-    --primary: oklch(0.9328 0.0025 228.7857);
-    --primary-foreground: oklch(0 0 0);
-    --secondary: oklch(0.9622 0.0035 219.5331);
-    --secondary-foreground: oklch(0.1884 0.0128 248.5103);
-    --muted: oklch(0.2090 0 0);
-    --muted-foreground: oklch(0.5637 0.0078 247.9662);
-    --accent: oklch(0.1928 0.0331 242.5459);
-    --accent-foreground: oklch(0.9328 0.0025 228.7857);
-    --destructive: oklch(0.6188 0.2376 25.7658);
-    --destructive-foreground: oklch(1.0000 0 0);
-    --border: oklch(0.2674 0.0047 248.0045);
-    --input: oklch(0.3020 0.0288 244.8244);
-    --ring: oklch(0.1884 0.0128 248.5103);
-    --chart-1: oklch(0.1884 0.0128 248.5103);
-    --chart-2: oklch(0.6907 0.1554 160.3454);
-    --chart-3: oklch(0.8214 0.1600 82.5337);
-    --chart-4: oklch(0.7064 0.1822 151.7125);
-    --chart-5: oklch(0.5919 0.2186 10.5826);
-    --sidebar: oklch(0.2097 0.0080 274.5332);
-    --sidebar-foreground: oklch(0.8853 0 0);
-    --sidebar-primary: oklch(0.1884 0.0128 248.5103);
-    --sidebar-primary-foreground: oklch(1.0000 0 0);
-    --sidebar-accent: oklch(0.1928 0.0331 242.5459);
-    --sidebar-accent-foreground: oklch(0.9328 0.0025 228.7857);
-    --sidebar-border: oklch(0.3795 0.0220 240.5943);
-    --sidebar-ring: oklch(0.1884 0.0128 248.5103);
+    /* Surfaces — dark: near-black recessed field, softly raised panels */
+    --background: oklch(0.1400 0 0);
+    --foreground: oklch(0.9400 0 0);
+    --card: oklch(0.1850 0 0);
+    --card-foreground: oklch(0.9400 0 0);
+    --popover: oklch(0.2100 0 0);
+    --popover-foreground: oklch(0.9400 0 0);
+
+    --primary: oklch(0.9400 0 0);
+    --primary-foreground: oklch(0.1400 0 0);
+    --secondary: oklch(0.2300 0 0);
+    --secondary-foreground: oklch(0.9400 0 0);
+
+    --muted: oklch(0.2300 0 0);
+    --muted-foreground: oklch(0.6250 0 0);
+    --accent: oklch(0.2450 0 0);
+    --accent-foreground: oklch(0.9400 0 0);
+
+    --destructive: oklch(0.5800 0.1800 25.0000);
+    --destructive-foreground: oklch(0.9800 0 0);
+
+    --border: oklch(0.2600 0 0);
+    --input: oklch(0.2750 0 0);
+    --ring: oklch(0.5000 0 0);
+
+    --chart-1: oklch(0.9400 0 0);
+    --chart-2: oklch(0.7600 0 0);
+    --chart-3: oklch(0.6000 0 0);
+    --chart-4: oklch(0.4400 0 0);
+    --chart-5: oklch(0.3200 0 0);
+
+    --sidebar: oklch(0.1400 0 0);
+    --sidebar-foreground: oklch(0.6250 0 0);
+    --sidebar-primary: oklch(0.9400 0 0);
+    --sidebar-primary-foreground: oklch(0.1400 0 0);
+    --sidebar-accent: oklch(0.2300 0 0);
+    --sidebar-accent-foreground: oklch(0.9400 0 0);
+    --sidebar-border: oklch(0.2600 0 0);
+    --sidebar-ring: oklch(0.5000 0 0);
 
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-serif: Georgia, serif;
     --font-mono: "SF Mono", Menlo, monospace;
 
-    --radius: 0.5rem;
-
+    --radius: 0.75rem;
     --tracking-normal: -0.011em;
 
-    --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-    --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+    --shadow-2xs: 0 1px 1px 0 oklch(0 0 0 / 0.20);
+    --shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.24);
+    --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.28);
+    --shadow: 0 1px 3px 0 oklch(0 0 0 / 0.32);
+    --shadow-md: 0 2px 8px -2px oklch(0 0 0 / 0.40);
+    --shadow-lg: 0 8px 24px -6px oklch(0 0 0 / 0.50);
+    --shadow-xl: 0 16px 40px -12px oklch(0 0 0 / 0.60);
+    --shadow-2xl: 0 28px 64px -20px oklch(0 0 0 / 0.70);
   }
 
   * {
@@ -120,42 +144,88 @@
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  /* Quiet scrollbars — the chrome should not out-shout the content */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+@layer components {
+  /* The core surface of the system: a raised panel on the recessed field. */
+  .panel {
+    @apply rounded-xl border border-border bg-card;
+  }
+
+  /* A panel that reacts to pointer without shifting layout. */
+  .panel-interactive {
+    @apply panel transition-[background-color,border-color] duration-200;
+  }
+  .panel-interactive:hover {
+    border-color: color-mix(in oklch, var(--foreground) 18%, transparent);
+    background-color: color-mix(in oklch, var(--card) 92%, var(--foreground));
+  }
+
+  /* Recessed well — used for inputs, code, and inset regions inside a panel. */
+  .well {
+    @apply rounded-lg border border-border bg-background;
+  }
+
+  /* Small uppercase section label, matching the sidebar's GENERAL treatment. */
+  .eyebrow {
+    @apply text-[10px] font-semibold uppercase text-muted-foreground;
+    letter-spacing: 0.16em;
+  }
 }
 
 @layer utilities {
-  /* Teachyst-style typography scale — Inter with tighter tracking and controlled weights */
+  /* ── Typography scale ─────────────────────────────────────────────────── */
   .text-display {
-    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
   }
 
   .text-h1 {
     @apply text-3xl lg:text-4xl;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.12;
   }
 
   .text-h2 {
     @apply text-2xl lg:text-3xl;
     font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.25;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
   }
 
   .text-h3 {
     @apply text-xl lg:text-2xl;
     font-weight: 600;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.016em;
     line-height: 1.3;
   }
 
   .text-body {
     font-size: 0.9375rem;
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.65;
     letter-spacing: -0.005em;
   }
 
@@ -173,19 +243,117 @@
     line-height: 20px;
   }
 
-  .card-hover {
-    @apply transition-all duration-200 hover:border-foreground/20 hover:shadow-md;
+  /* ── Atmosphere ───────────────────────────────────────────────────────── */
+
+  /* Fine engineering grid. Apply to an absolutely-positioned overlay, not to a
+     container with children — it paints edge to edge and fades via mask. */
+  .bg-grid {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--border) 70%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--border) 70%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 72px 72px;
   }
 
-  .btn-primary {
-    @apply bg-primary text-primary-foreground transition-all duration-200 hover:bg-primary/90;
+  .bg-grid-sm {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklch, var(--border) 55%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--border) 55%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 24px 24px;
   }
 
+  .mask-fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+  }
+
+  .mask-fade-radial {
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+  }
+
+  /* Soft monochrome bloom behind hero content. */
+  .glow-top {
+    background: radial-gradient(
+      ellipse 70% 50% at 50% -10%,
+      color-mix(in oklch, var(--foreground) 9%, transparent),
+      transparent 70%
+    );
+  }
+
+  /* 1px top highlight that makes a panel read as physically raised. */
+  .panel-highlight {
+    position: relative;
+  }
+  .panel-highlight::before {
+    content: "";
+    position: absolute;
+    inset-inline: 1rem;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklch, var(--foreground) 22%, transparent),
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  /* ── Layout helpers ───────────────────────────────────────────────────── */
   .container-padding {
     @apply px-4 sm:px-6 lg:px-8;
   }
 
   .section-padding {
     @apply py-8 md:py-16;
+  }
+
+  .card-hover {
+    @apply transition-[background-color,border-color] duration-200;
+  }
+  .card-hover:hover {
+    border-color: color-mix(in oklch, var(--foreground) 18%, transparent);
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground transition-opacity duration-200 hover:opacity-90;
+  }
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-rise {
+    animation: rise-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-rise {
+      animation: none;
+    }
   }
 }

@@ -22,18 +22,18 @@ import { ActionCard } from "@/components/ActionCard";
 
 const STATUS: Record<string, { pill: string; dot: string; label: string }> = {
   PUBLISHED: {
-    pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    dot: "bg-emerald-500",
+    pill: "border-border bg-accent text-foreground",
+    dot: "bg-foreground",
     label: "Published",
   },
   DRAFT: {
-    pill: "bg-amber-50 text-amber-700 border-amber-200",
-    dot: "bg-amber-400",
+    pill: "border-border bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground",
     label: "Draft",
   },
   ARCHIVED: {
     pill: "bg-muted text-muted-foreground border-border",
-    dot: "bg-zinc-400",
+    dot: "bg-border",
     label: "Archived",
   },
 };

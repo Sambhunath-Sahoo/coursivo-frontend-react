@@ -470,7 +470,7 @@ export default function CourseBuilder() {
                       <div className="flex items-center justify-between rounded-xl bg-background border border-border px-4 py-3 shadow-sm mt-4">
                         <span className="text-sm font-medium text-muted-foreground">Status</span>
                         <span className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${
-                          id ? "border-amber-200 bg-amber-50 text-amber-700" : "border-border bg-muted text-muted-foreground"
+                          id ? "border-foreground/30 bg-accent text-foreground" : "border-border bg-muted text-muted-foreground"
                         }`}>
                           {id ? "Draft" : "New"}
                         </span>

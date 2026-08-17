@@ -3,16 +3,22 @@ import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Course } from "@/types/course.types";
 
-// Deterministic gradient placeholder based on course id
+/**
+ * Deterministic placeholder fill, keyed off course id.
+ *
+ * Constraint: the theme is a neutral ramp with no accent hue, so these vary by lightness
+ * only. Reintroducing saturated gradients here is the fastest way to break the monochrome
+ * system, because thumbnails tile the densest grids on the site.
+ */
 const GRADIENTS = [
-  "from-violet-500 to-purple-700",
-  "from-sky-500 to-blue-700",
-  "from-emerald-500 to-teal-700",
-  "from-amber-400 to-orange-600",
-  "from-rose-500 to-pink-700",
-  "from-indigo-500 to-blue-800",
-  "from-cyan-400 to-sky-600",
-  "from-fuchsia-500 to-purple-800",
+  "from-neutral-300 to-neutral-400 dark:from-neutral-700 dark:to-neutral-800",
+  "from-neutral-200 to-neutral-400 dark:from-neutral-600 dark:to-neutral-800",
+  "from-neutral-400 to-neutral-500 dark:from-neutral-800 dark:to-neutral-900",
+  "from-neutral-300 to-neutral-500 dark:from-neutral-700 dark:to-neutral-900",
+  "from-neutral-200 to-neutral-300 dark:from-neutral-600 dark:to-neutral-700",
+  "from-neutral-300 to-neutral-400 dark:from-neutral-800 dark:to-neutral-950",
+  "from-neutral-400 to-neutral-600 dark:from-neutral-700 dark:to-neutral-900",
+  "from-neutral-200 to-neutral-500 dark:from-neutral-600 dark:to-neutral-900",
 ];
 
 function CourseThumbnail({ id, title, thumbnailUrl, className }: { id: number; title: string; thumbnailUrl: string | null; className?: string }) {
@@ -66,20 +72,21 @@ function formatPrice(price: number, currency: string, isFree: boolean): string {
 
 function RatingStars({ rating = 4.5 }: { rating?: number }) {
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex items-center gap-0.5" aria-label={`Rated ${rating} out of 5`}>
       {[...Array(5)].map((_, i) => {
         const filled = i < Math.floor(rating);
         const half = !filled && i < rating;
         return (
           <Star
             key={i}
+            aria-hidden
             className={cn(
               "h-3 w-3 shrink-0",
               filled
-                ? "fill-amber-400 text-amber-400"
+                ? "fill-foreground/80 text-foreground/80"
                 : half
-                  ? "fill-amber-200 text-amber-300"
-                  : "fill-muted text-muted",
+                  ? "fill-foreground/40 text-foreground/40"
+                  : "fill-border text-border",
             )}
           />
         );
@@ -99,7 +106,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
     <Link
       to={`/courses/${course.id}`}
       className={cn(
-        "group block overflow-hidden rounded-xl border border-border bg-background transition-all duration-200 hover:border-foreground/20 hover:shadow-md",
+        "group block overflow-hidden rounded-xl border border-border bg-card transition-[background-color,border-color] duration-200 hover:border-foreground/20",
         className,
       )}
     >
@@ -126,20 +133,13 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
         {/* Rating row */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[12px] font-semibold text-amber-500">4.5</span>
+          <span className="text-[12px] font-semibold text-foreground">4.5</span>
           <RatingStars rating={4.5} />
           <span className="text-[11px] text-muted-foreground">(1,234)</span>
         </div>
 
         {/* Price */}
-        <p
-          className={cn(
-            "text-[13px] font-semibold tracking-tight",
-            isFreeCard ? "text-emerald-600" : "text-foreground",
-          )}
-        >
-          {priceLabel}
-        </p>
+        <p className="text-[13px] font-semibold tracking-tight text-foreground">{priceLabel}</p>
       </div>
     </Link>
   );
@@ -147,7 +147,7 @@ export function CourseCard({ course, className }: CourseCardProps) {
 
 export function CourseCardSkeleton() {
   return (
-    <div className="flex animate-pulse flex-col overflow-hidden rounded-xl border border-border bg-background">
+    <div className="flex animate-pulse flex-col overflow-hidden rounded-xl border border-border bg-card">
       <div className="aspect-[16/9] w-full shrink-0 bg-muted" />
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="h-4 w-full rounded bg-muted" />
@@ -163,7 +163,7 @@ export function CourseCardSkeleton() {
 
 export function ListSkeleton() {
   return (
-    <div className="flex animate-pulse items-center gap-5 rounded-xl border border-border bg-background p-4">
+    <div className="flex animate-pulse items-center gap-5 rounded-xl border border-border bg-card p-4">
       <div className="h-24 w-40 shrink-0 rounded-lg bg-muted" />
       <div className="flex-1 space-y-2">
         <div className="h-4 w-3/4 rounded bg-muted" />
@@ -190,7 +190,7 @@ export function CourseListItem({ course }: { course: Course }) {
   return (
     <Link
       to={`/courses/${course.id}`}
-      className="group flex items-center gap-5 rounded-xl border border-border bg-background p-4 transition-all duration-200 hover:border-foreground/20 hover:shadow-sm"
+      className="group flex items-center gap-5 rounded-xl border border-border bg-card p-4 transition-[background-color,border-color] duration-200 hover:border-foreground/20"
     >
       <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-lg bg-muted">
         <CourseThumbnail id={course.id} title={title} thumbnailUrl={thumbnailUrl} className="h-full w-full" />
@@ -206,25 +206,14 @@ export function CourseListItem({ course }: { course: Course }) {
           {title}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">{instructor.fullName}</p>
-        <div className="mt-2 flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <svg
-              key={i}
-              className={`h-3 w-3 ${i < 4 ? "text-amber-400" : "text-muted"}`}
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          ))}
-          <span className="ml-1 text-[11px] text-muted-foreground">(1,234)</span>
+        <div className="mt-2 flex items-center gap-1.5">
+          <RatingStars rating={4} />
+          <span className="text-[11px] text-muted-foreground">(1,234)</span>
         </div>
       </div>
 
       <div className="shrink-0">
-        <span className={`text-sm font-semibold tracking-tight ${isFreeCard ? "text-emerald-600" : "text-foreground"}`}>
-          {priceLabel}
-        </span>
+        <span className="text-sm font-semibold tracking-tight text-foreground">{priceLabel}</span>
       </div>
     </Link>
   );

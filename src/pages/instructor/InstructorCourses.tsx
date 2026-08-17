@@ -8,18 +8,18 @@ import { CourseCardSkeleton } from "@/components/CourseCard";
 
 const STATUS: Record<string, { pill: string; dot: string; label: string }> = {
   PUBLISHED: {
-    pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    dot: "bg-emerald-500",
+    pill: "border-border bg-accent text-foreground",
+    dot: "bg-foreground",
     label: "Published",
   },
   DRAFT: {
-    pill: "bg-amber-50 text-amber-700 border-amber-200",
-    dot: "bg-amber-400",
+    pill: "border-border bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground",
     label: "Draft",
   },
   ARCHIVED: {
     pill: "bg-muted text-muted-foreground border-border",
-    dot: "bg-zinc-400",
+    dot: "bg-border",
     label: "Archived",
   },
 };
@@ -87,8 +87,8 @@ export default function InstructorCourses() {
 
         {/* ── Error ──────────────────────────────────────────────────── */}
         {error && (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 py-16 text-center">
-            <p className="font-semibold text-red-600">{error}</p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/30 bg-destructive/10 py-16 text-center">
+            <p className="font-semibold text-destructive">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="mt-4 rounded-full bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm border border-border hover:bg-muted/30"
